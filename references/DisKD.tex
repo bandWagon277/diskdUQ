@@ -1,0 +1,2604 @@
+%%%%%%%% ICML 2026 EXAMPLE LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+% Recommended, but optional, packages for figures and better typesetting:
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs} % for professional tables
+
+% hyperref makes hyperlinks in the resulting PDF.
+% If your build breaks (sometimes temporarily if a hyperlink spans a page)
+% please comment out the following usepackage line and replace
+% \usepackage{icml2026} with \usepackage[nohyperref]{icml2026} above.
+\usepackage{hyperref}
+
+
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Use the following line for the initial blind version submitted for review:
+\usepackage{icml2026}
+
+% For preprint, use
+% \usepackage[preprint]{icml2026}
+
+% If accepted, instead use the following line for the camera-ready submission:
+% \usepackage[accepted]{icml2026}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{booktabs}
+% \usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{bbm}
+\usepackage{enumerate}
+% \usepackage{endfloat}
+% \usepackage{graphicx}
+% \usepackage{xcolor}
+\usepackage{makecell}
+\usepackage{titletoc}
+% if you use cleveref..
+\usepackage[capitalize,noabbrev]{cleveref}
+% \usepackage[table]{xcolor}
+\usepackage{colortbl}
+% 5 个结构对应 5 个色系（你可以随便改 RGB）
+\definecolor{blkA}{RGB}{86,138,214}   % blue
+\definecolor{blkB}{RGB}{225,141,73}   % orange
+\definecolor{blkC}{RGB}{93,170,112}   % green
+\definecolor{blkD}{RGB}{150,112,206}  % purple
+\definecolor{blkE}{RGB}{86,170,200}   % teal
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THEOREMS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% Todonotes is useful during development; simply uncomment the next line
+%    and comment out the line below the next line to turn off comments
+%\usepackage[disable,textsize=tiny]{todonotes}
+\usepackage[textsize=tiny]{todonotes}
+
+% The \icmltitle you define below is probably too long as a header.
+% Therefore, a short form for the running title is supplied here:
+\icmltitlerunning{Discrete Survival Knowledge Distillation for Competing Risks Analysis}
+
+
+\begin{document}
+
+\twocolumn[
+  \icmltitle{Discrete Survival Knowledge Distillation for Competing Risks Analysis}
+
+  % It is OKAY to include author information, even for blind submissions: the
+  % style file will automatically remove it for you unless you've provided
+  % the [accepted] option to the icml2026 package.
+
+  % List of affiliations: The first argument should be a (short) identifier you
+  % will use later to specify author affiliations Academic affiliations
+  % should list Department, University, City, Region, Country Industry
+  % affiliations should list Company, City, Region, Country
+
+  % You can specify symbols, otherwise they are numbered in order. Ideally, you
+  % should not use this facility. Affiliations will be numbered in order of
+  % appearance and this is the preferred way.
+  \icmlsetsymbol{equal}{*}
+
+  \begin{icmlauthorlist}
+    \icmlauthor{Feiyang Deng}{umich_biostat}
+    \icmlauthor{Lingfeng Luo}{umich_biostat}
+    \icmlauthor{Di Wang}{mcw}
+    \icmlauthor{Lingxuan Kong}{umich_biostat}
+    \icmlauthor{Kevin He}{umich_biostat}
+    % \icmlauthor{Firstname6 Lastname6}{sch,yyy,comp}
+    % \icmlauthor{Firstname7 Lastname7}{comp}
+    %\icmlauthor{}{sch}
+    % \icmlauthor{Firstname8 Lastname8}{sch}
+    % \icmlauthor{Firstname8 Lastname8}{yyy,comp}
+    %\icmlauthor{}{sch}
+    %\icmlauthor{}{sch}
+  \end{icmlauthorlist}
+
+  \icmlaffiliation{umich_biostat}{Department of Biostatistics, University of Michigan, Ann Arbor, MI, US}
+  \icmlaffiliation{mcw}{Department of Data Science Institute, The Medical College of Wisconsin, Milwaukee, WI, US}
+  % \icmlaffiliation{sch}{School of ZZZ, Institute of WWW, Location, Country}
+
+  \icmlcorrespondingauthor{Feiyang Deng}{dengfy@umich.edu}
+  % \icmlcorrespondingauthor{Firstname2 Lastname2}{first2.last2@www.uk}
+
+  % You may provide any keywords that you find helpful for describing your
+  % paper; these are used to populate the "keywords" metadata in the PDF but
+  % will not be shown in the document
+  \icmlkeywords{Machine Learning, ICML}
+
+  \vskip 0.3in
+]
+
+% this must go after the closing bracket ] following \twocolumn[ ...
+
+% This command actually creates the footnote in the first column listing the
+% affiliations and the copyright notice. The command takes one argument, which
+% is text to display at the start of the footnote. The \icmlEqualContribution
+% command is standard text for equal contribution. Remove it (just {}) if you
+% do not need this facility.
+
+% Use ONE of the following lines. DO NOT remove the command.
+% If you have no special notice, KEEP empty braces:
+\printAffiliationsAndNotice{}  % no special notice (required even if empty)
+% Or, if applicable, use the standard equal contribution text:
+% \printAffiliationsAndNotice{\icmlEqualContribution}
+
+\begin{abstract}
+Accurate prediction in survival analysis with competing risks is challenged by rare event rates and limited effective sample sizes. Knowledge distillation offers a promising way to transfer information from an external teacher to improve a local student, but existing methods are overwhelmingly developed for uncensored outcomes and do not directly extend to survival analysis, where censored observations provide only partial information. Moreover, prior work often assumes that teacher and student share identical outcome definitions, whereas in competing risks settings, they may differ in outcome granularity and event definitions, further complicating knowledge transfer. To address these gaps, we propose DiSKD (Discrete Survival Knowledge Distillation), a deep learning framework for discrete-time competing risks that integrates teacher predictions via a cause-specific, time-dependent Kullback--Leibler divergence. DiSKD enables flexible and privacy-preserving transfer without requiring raw data sharing, remains robust to model misspecification or outcome-definition heterogeneity, and adaptively weights teacher guidance by emphasizing compatible teachers while down-weighting less relevant ones. Simulation studies and real-world applications demonstrate improved discrimination and calibration. 
+\end{abstract}
+
+\section{Introduction}
+\label{s:intro}
+
+%[XX Evaluation metric; tuning parameter selection; various settings of heterogeneity (e.g. covariate shift, censoring mechanism, negative transfer)]
+
+Deep learning approaches have emerged as promising tools for survival analysis.  For example, discrete-time survival models using neural networks have gained traction in clinical applications \citep{ gensheimer2019scalable, kvamme2021continuous,wiegrebe2024deep}. More recent work incorporates attention mechanisms for improved temporal modeling \citep{hu2021transformer, zisser2024transformer}, while methods like DeepHit \citep{lee2018deephit} extend this framework to competing risks by directly learning probability mass functions over event types and time points. Despite rapid methodological advances, the success of deep learning typically relies on large-scale datasets. In survival analysis, however, deep learning faces hurdles such as rare events, heavy censoring, small sample sizes, high dimensionality, and low signal-to-noise ratios. These issues are amplified in competing risks settings, where censoring and sparse cause-specific failures compound these challenges and further limit information  \citep{liu2014estimating}.
+
+
+Our endeavor is motivated by kidney transplantation,  widely regarded as the preferred treatment for patients with renal failure \citep{wolfe1999comparison}. However, demand for kidney transplantation far exceeds available supply. Currently, approximately 93,000 patients remain on the U.S. kidney transplant waiting list. Due to organ scarcity, the median waiting time is about four years, during which roughly 5\% of patients die each year without receiving a transplant. Paradoxically, 30\% of donated kidneys (over 8,000 annually) are discarded, often due to concerns about donor quality \citep{Marrero}. In contrast, kidney discard rates in Europe are typically below 10\%.  The dilemma is that accepting lower-quality donors can result in better survival than continued waiting, but also may result in worse post-transplant outcomes. Patients therefore face a trade-off: they can select a higher-quality organ threshold and stay on the waiting list longer, which may increase the risk of dying, or select a lower-quality organ threshold and receive a transplant sooner but possibly experience earlier graft failure. Yet there are no clinical practice guidelines or consensus recommendations that provide patient-specific decision support about donor quality and associated outcomes. %, pointing to a critical need for more accurate risk prediction to guide donor acceptance decisions and reduce unnecessary discards.
+
+Despite urgent needs, accurate risk prediction for organ transplantation requires addressing several challenges. 
+First, post-transplant outcomes are inherently a competing-risks problem: graft failure and patient death with a functioning graft, which are mutually exclusive terminal outcomes that provide distinct, but interrelated, information about transplant prognosis. 
+Risk prediction with such competing events is challenged by heavily censored follow-ups and strong cross-cause dependence.
+% \textcolor{red}{Risk prediction with such competing events are challenged by rare event rates, limited effective sample sizes, and heavily censored follow-ups.(Repeated in paragraph 1)} % TODO: 思考怎么避免使用一模一样的词语？
+Second, kidney transplant data exhibit substantial temporal and geographic heterogeneity due to overlapping disruptions from the COVID-19 pandemic and major policy reforms (see Figure~\ref{fig_srtr:results}a in Section~\ref{SRTR1} and  Figure~\ref{fig:SRTR_trend} in Appendix~\ref{A.SRTR1.Temporal}). 
+In particular, the nationwide implementation of the KAS250 policy in March 2021 (which removed donation service areas and expanded organ sharing to a 250-mile radius) coincided with the recovery from the first wave of the pandemic \citep{cron2023increased}. During this period, transplant center activity fluctuated, recipient mortality rose, and donor profiles shifted toward higher-risk categories, creating distributional shifts in post-transplant risk patterns. Consequently, post-KAS250 prediction is essential for policy assessment and clinical care, yet post-KAS250 cohorts are small, short-term, and event-sparse, whereas larger pre- and mid-pandemic data may no longer represent current practice. 
+Third, patient privacy constraints often restrict sharing individual-level historical data; instead, only summary information from published models can be exchanged. 
+Finally, integration is complicated by heterogeneity across models and data sources in covariate definitions, feature sets, and endpoint formulations. For instance, the widely used post-transplant model \citep{snyder2016developing} was developed using overall failure time without distinguishing competing risks, limiting compatibility with more granular cause-specific models.
+
+
+
+
+
+%These challenges are compounded by the structure of the Scientific Registry of Transplant Recipients (SRTR) data system. Each month, SRTR receives an updated snapshot of the Organ Procurement and Transplantation Network (OPTN) database, incorporating all new transplants and revisions to prior records. Consequently, each release provides a current yet partial view of post-policy outcomes: the most recent transplant cohorts are clinically relevant yet have limited follow-up and heavy censoring. This dynamic, rolling-update structure requires models that adapt to new data while effectively using prior models to maintain calibration under evolving practice patterns.
+
+%In parallel, SRTR publicly releases national predictive models—typically Cox regression models for one-year mortality, graft failure, and related outcomes—approximately every six months. These models are derived from the full registry and report coefficients and baseline hazards but not individual-level records, reflecting privacy and regulatory constraints. Thus, external information about risk structure is often available only as aggregate model outputs rather than raw patient data.
+
+%From a broader perspective, this rolling-update design mirrors a lifelong learning environment: new data continually arrive, historical models are periodically refreshed, and patient populations and clinical practice evolve over time \citep{thrun1995lifelong, chi2022novel}. The goal, therefore, is not to rebuild models from scratch but to transfer and adapt existing knowledge to maintain calibration and discrimination under temporal drift. This highlights the need for statistical frameworks that can leverage historical models to recalibrate and update predictions under shifting data distributions and policy changes. Together, these characteristics motivate methods that transfer structured knowledge from previously trained or publicly released models to newly emerging cohorts, enabling continuous model updating and recalibration without access to external individual-level data.
+
+Our proposed solution was motivated by knowledge distillation, which trains internal “student” models by transferring information from external “teacher” models \citep{hinton2015distilling, gou2021knowledge}. This distillation allows the student model to leverage external knowledge and improve generalization and robustness under data constraints. Although successful for classification tasks \citep{ma2021distilling, ranjbari2023integration}, these methods are not directly applicable to censored time-to-event data. In particular, classical Kullback–Leibler (KL) divergence-based distillation objectives assume that each training subject has a well-defined target distribution so the student can be trained to mimic the teacher's predicted distribution. 
+For uncensored observations in survival analysis, the event time is observed, yielding a likelihood contribution at that time and making teacher–student alignment conceptually feasible. For censored observations, however, the data only reveal that the failure time exceeds the censoring time, and thus there is no available event-time probability mass (or density) function to match. This mismatch makes standard distribution-based distillation ill-defined for censored individuals. % and complicates how to align a teacher's time-indexed risk predictions with partially observed outcomes.
+
+
+%Our proposed solution was motivated by knowledge distillation, a machine learning technique that trains internal ``student'' models by transferring information from external ``teacher'' models \citep{hinton2015distilling, gou2021knowledge}.  This distillation allows the student model to leverage external  knowledge while adapting to internal data, improving generalization and robustness under data constraints.  Although successful for classification tasks \citep{ma2021distilling, ranjbari2023integration}, these methods are not directly applicable to censored time-to-event data, where many outcomes are only partially observed. This partial information (the unobserved failure time is greater than the observed censoring time)  fundamentally differs from the fully observed labels used in standard distillation, making it unclear how to align  teacher’s time-indexed risk predictions for censored individuals.
+
+
+
+On the other hand, although transfer learning methods \citep{chen2021combining, sheng2021synthesizing, cheng2023semiparametric, wang2025kullback} have been proposed for survival data integration,  these techniques are largely rooted in classical regression frameworks. They often assume linear covariate effects and may not extend naturally to nonlinear or high-capacity deep learning models. In addition, approaches such as  \citet{li2022transfer} and \citet{tian2023transfer}, which penalize coefficient differences between external and internal models, implicitly assume a shared parameterization and covariate space. This becomes problematic in deep neural networks, where parameters rarely correspond one-to-one and feature representations can differ due to preprocessing, embeddings, or learned transformations. These incompatibilities make direct coefficient alignment infeasible. 
+% \textcolor{blue}{
+
+% }
+
+
+
+To address these challenges, we propose a discrete-time knowledge distillation method (DiSKD) that applies to both standard time-to-event and competing risk settings. The framework offers the following advantages:
+(1) it leverages deep neural networks to model complex nonlinear relationships, covariate interactions, and temporal dynamics, improving predictive accuracy;
+(2) it adaptively weights information from teachers, emphasizing compatible sources and down-weighting less relevant ones;
+(3) it is robust to model misspecification and accommodates diverse teachers, including Cox  models, discrete-time survival models, and deep learning approaches, as long as they provide predicted probabilities;
+(4) it allows partial overlap in covariate sets between teacher and student models;
+(5) it accommodates outcome-definition heterogeneity between teacher and student models, such as when the student model targets competing risks while teachers report only aggregated (overall) failures; 
+(6) it relies solely on nonsensitive predictions from the teacher rather than raw data or model parameters, respecting privacy constraints; and
+(7) it incurs computational cost comparable to standard deep learning procedures, making it scalable to large-scale settings.
+
+
+\section{Method}
+\label{s:model}
+%This section introduces our proposed framework, which integrates external model predictions into a discrete-time competing risks model via KL divergence. We begin by formalizing the internal data structure under a discrete-time competing risks setting and describe how the model can be parameterized using neural networks. We then demonstrate how the framework accommodates external models with heterogeneous structures, as long as they provide a sequence of predicted cause-specific hazards over discrete failure intervals.
+
+\subsection{Internal Discrete Competing Risks Model}
+\label{section: Internal}
+
+Let $D_i$ and $C_i$ be the failure and censoring time, respectively, for subject $i$ in the internal cohort, $i=1, \ldots, n$, where $n$ is the sample size. Let $\Delta_i \in \{1, \ldots, J\}$ be the indicator of the cause of failure, where $J$ is the total number of competing risks. Let $\tau_1, \ldots, \tau_K$ be the discrete follow-up times. Let $\boldsymbol Z_i$ be a covariate vector for subject $i$. Assume that $D_i$ is independent of $C_i$, conditional on $\boldsymbol Z_i$. The cause-specific discrete hazard  \citep{kalbfleisch2002statistical} for cause $j$ at time $\tau_k$, $k=1, \ldots, K$, given covariates $\mathbf{Z}_i$, is defined as:
+\begin{equation*}
+    \lambda_j(\tau_k; \bm{Z}_i) = P(D_i = \tau_k, \Delta_i = j \mid D_i \ge \tau_k, \bm{Z}_i),
+\end{equation*}
+which represents the probability subject $i$ experiences an event from cause $j$ exactly at time $\tau_k$, conditional on survival to $\tau_k$.  Specifically,  we consider the following  formulation:  
+\begin{equation*}
+    \lambda_j(\tau_k;\boldsymbol{Z}_{i}) = \frac{\exp\{r_j(\tau_k;\boldsymbol{Z}_{i})\}}{1+\sum_{j^*=1}^J\exp\{r_{j^*}(\tau_k;\boldsymbol{Z}_{i})\}},~j=1, \ldots, J,
+\end{equation*}
+where  $r_j(\tau_k;\boldsymbol{Z}_{i})$, $j=1, \ldots, J$, are real-valued  functions of time and covariates. Define $\boldsymbol{r}=(r_1, \ldots, r_J)^\top$. Let $\delta_{ik}^{(j)} = I(D_i = \tau_k, \Delta_i = j)$ be the event indicator for cause $j$ at time $\tau_k$, and  $Y_{ik}=I(\min(D_i, C_i) \ge \tau_k)$ be the at-risk indicator for subject $i$ at $\tau_k$. The corresponding log-likelihood of the internal cohort is:
+% \begin{align}
+% \ell(\boldsymbol{r}) &=\sum_{i=1}^n\sum_{k=1}^{K}  Y_{ik}\left (\sum_{j=1}^J\left\{
+% \delta_{ik}^{(j)}r_j(\tau_k;\boldsymbol Z_{i})
+% \right\} - \log\left [1+\sum_{j=1}^J\exp\{ r_{j}(\tau_k;\boldsymbol{Z}_{i})\}\right ] \right ),
+% \label{log l hazard competing}
+% \end{align}
+\begin{align}
+\ell(\boldsymbol r)
+&=
+\sum_{i=1}^n \sum_{k=1}^{K} Y_{ik}
+\Bigg[
+    \sum_{j=1}^J
+    \delta_{ik}^{(j)} r_j(\tau_k;\boldsymbol Z_i)
+\nonumber\\
+&\qquad\qquad
+    - \log\!\left(
+        1 + \sum_{j=1}^J
+        \exp\{ r_j(\tau_k;\boldsymbol Z_i) \}
+      \right)
+\Bigg].
+\label{log l hazard competing}
+\end{align}
+
+
+
+
+
+\subsection{Teacher Predictions} \label{section: External}
+%External data sources such as national registries or large hospital databases are often unavailable due to privacy or ownership restrictions. However, models trained on such data are sometimes accessible and can be used to generate predictions. We exploit this by using the outputs of external models---not their internal structure---as additional guidance.
+Suppose there is a teacher model (e.g. a discrete failure-time model or a Cox model) that takes covariates (or a subset of) $\bm{Z}_i$ as input and outputs predicted cause-specific hazards: 
+\begin{equation*}
+    \tilde{\lambda}_j(\tau_k;\bm{Z}_{i}) = \tilde{P}(D_i = \tau_k, \Delta_i = j|D_i\geq\tau_k,\bm{Z}_i),
+\end{equation*}
+where $\tilde{P}$ is the distribution of the teacher model. %The proposed method accommodates a wide range of external prediction models, including discrete failure-time models, a Cox model, or a deep neural network, as long as the model outputs predicted cause-specific hazards.
+
+
+
+\subsection{Distilled Competing Risks Model}
+%Given external predictions, the question is: how can we use these predictions to improve the local model? Our key idea is to strike a balance: learn from the external model where it aligns with internal data, while allowing the local model to adapt to cohort-specific patterns. 
+To quantify heterogeneity between student and teacher, we leverage two observations: 
+First, the likelihood of the discrete cause-specific hazards model, as in \eqref{log l hazard competing}, is fully determined by the cause-specific hazards, which are conditional probabilities; 
+Second, in discrete-time competing risks setup, each subject contributes a sequence of multinomial outcomes over time: at each interval $\tau_k$, one of the $J$ causes may occur (or none, if the subject survives), where the probability of each outcome is the cause-specific hazards.  These insights motivate us to define a cause-specific time-dependent  KL divergence between the  distribution implied by the teacher $\tilde{P}$ and that of the student $P_{\boldsymbol{r}}$,
+% \begin{eqnarray*}
+%  d(\tilde{P} \Vert  P_{\boldsymbol{r}};\bm{Z}_{i}, \tau_k) = \sum_{j=1}^J \tilde{\lambda}_j(\tau_k; \bm{Z}_{i}) \log\left\{\frac{\tilde{\lambda}_j(\tau_k;\bm{Z}_{i})}{\lambda_{j}(\tau_k;\bm{Z}_{i})}\right\} +\{1-\tilde{\lambda}(\tau_k;\bm{Z}_{i})\} \log\left\{\frac{1-\tilde{\lambda}(\tau_k;\bm{Z}_{i})}{1-\lambda_{}(\tau_k;\bm{Z}_{i})}\right\},
+% \end{eqnarray*}
+\begin{align}
+d(\tilde P &\Vert P_{\boldsymbol r}; \tau_k, \bm Z_i)
+=
+\sum_{j=1}^J
+\tilde{\lambda}_j(\tau_k; \bm Z_i)
+\log\!\Biggl(
+\frac{\tilde{\lambda}_j(\tau_k; \bm Z_i)}
+     {\lambda_j(\tau_k; \bm Z_i)}
+\Biggr)
+\nonumber\\
+&\quad
++
+\bigl\{1-\tilde{\lambda}(\tau_k; \bm Z_i)\bigr\}
+\log\!\Biggl(
+\frac{1-\tilde{\lambda}(\tau_k; \bm Z_i)}
+     {1-\lambda(\tau_k; \bm Z_i)}
+\Biggr),
+\label{eq: kl}
+\end{align}
+where $\lambda(\tau_k; \bm{Z}_i) = \sum_{j=1}^J \lambda_j(\tau_k; \bm{Z}_i)$ and $\tilde{\lambda}(\tau_k;\bm{Z}_{i})= \sum_{j=1}^J \tilde\lambda_j(\tau_k; \bm{Z}_i)$ are the overall hazards across all causes. To accumulate information from longitudinal multinomial outcomes across subjects in the internal data,  the accumulated KL divergence is given by,
+\begin{equation}
+\mbox{D}(\tilde{P}\Vert P_{\boldsymbol{r}})=\sum_{i=1}^n \sum_{k=1}^K Y_{ik}d(\tilde{P}\Vert P_{\boldsymbol{r}};  \tau_k, \bm Z_i),
+\label{eq: accumulative kl}
+\end{equation}
+which measures the discrepancy between the student distribution and the teacher guidance over all at-risk intervals. To balance the trade-off between the teacher and the internal data, we aim to maximize the log-likelihood of the internal data, while simultaneously keeping the KL divergence small. This is achieved by maximizing a penalized log-likelihood
+\begin{equation}
+  \ell_{\eta}(\boldsymbol{r})
+= \ell(\boldsymbol{r})- \eta~ \mbox{D}(\tilde{P} \Vert  P_{\boldsymbol{r}}),
+\label{eq:penalized-loglik0}  
+\end{equation}
+where $\eta \geq 0$ is a hyperparameter that tunes trust in teacher predictions, giving larger weight to more comparable ones and downweighting less relevant ones.  
+In the extreme case $\eta = 0$, $\ell_{\eta}(\boldsymbol{r})$ reduces to the log-likelihood, defined in \eqref{log l hazard competing}, based only on internal data. When $\eta = \infty$, maximizing $\ell_{\eta}(\boldsymbol{r})$ is equivalent to minimizing $\mbox{D}(\tilde{P} \Vert  P_{\boldsymbol{r}})$, forcing the model to replicate teacher predictions. 
+
+
+\paragraph{Temperature–Adjusted KL for Competing Risks.}
+A natural extension of the proposed distillation is to introduce a temperature parameter $T>0$ into the KL  component. In classical knowledge distillation, temperature scaling softens the teacher’s predictive distribution, revealing relative similarities among non-target classes~\citep{hinton2015distilling}; in competing risks, this is useful because non-realized causes carry structural information about cross-cause dependence (e.g. shared latent health status or common etiologic pathways) that may be weakly identified from internal data alone. In these cases, the teacher’s full predictive distribution is informative beyond the realized cause, as it encodes how non-realized risks relate to the realized one over time. 
+%Let $\tilde{\boldsymbol\lambda}(\tau_k;\bm Z_i)=(\tilde\lambda_1,\ldots,\tilde\lambda_J)$ be the external cause-specific hazards.
+Define the temperature-scaled teacher distribution
+\begin{equation*}
+\tilde{\lambda}^{(T)}_j(\tau_k;\bm Z_i)
+=
+\frac{\{\tilde{\lambda}_j(\tau_k;\bm Z_i)\}^{\frac{1}{T}}}{\big\{1-\tilde{\lambda}(\tau_k;\bm Z_i)\big\}^{\frac{1}{T}}
++ \sum_{l=1}^J \{\tilde{\lambda}_{l}(\tau_k;\bm Z_i)\}^{\frac{1}{T}}},
+\end{equation*}
+%where
+%\[
+%C_T(\tau_k;\bm Z_i)=\big(1-\tilde{\lambda}(\tau_k;\bm Z_i)\big)^{1/T}+ \sum_{j'=1}^J \{\tilde{\lambda}_{j'}(\tau_k;\bm Z_i)\}^{1/T},
+%\]
+% \[
+% \tilde{\lambda}^{(T)}_j(\tau_k;\bm Z_i)
+% =
+% \frac{
+% \exp\!\left\{\tilde r_j(\tau_k;\bm Z_i)/T\right\}
+% }{
+% 1+\sum_{j'=1}^J \exp\!\left\{\tilde r_{j'}(\tau_k;\bm Z_i)/T\right\}
+% },
+% \]
+and  $\lambda^{(T)}_j(\tau_k;\bm Z_i)$ is defined similarly. 
+The temperature-adjusted cause-specific KL divergence is then defined as
+% \[
+% d_T(\tilde{P}\Vert P_{\boldsymbol r};\bm Z_i,\tau_k)
+% =
+% \sum_{j=1}^J 
+% \tilde{\lambda}^{(T)}_j(\tau_k;\bm Z_i)
+% \log\!\left(
+% \frac{\tilde{\lambda}^{(T)}_j(\tau_k;\bm Z_i)}
+%      {\lambda^{(T)}_j(\tau_k;\bm Z_i)}
+% \right)
+% +
+% \{1-\tilde{\lambda}^{(T)}(\tau_k;\bm Z_i)\}
+% \log\!\left(
+% \frac{
+% 1-\tilde{\lambda}^{(T)}(\tau_k;\bm Z_i)
+% }{
+% 1-\lambda^{(T)}(\tau_k;\bm Z_i)
+% }
+% \right),
+% \]
+\begin{equation*}
+\begin{aligned}
+d_T&(\tilde{P}\Vert P_{\boldsymbol r};\tau_k, \bm Z_i)
+=
+\sum_{j=1}^J 
+\tilde{\lambda}^{(T)}_j(\tau_k;\bm Z_i)
+\log\!\Biggl(
+\frac{\tilde{\lambda}^{(T)}_j(\tau_k;\bm Z_i)}
+     {\lambda^{(T)}_j(\tau_k;\bm Z_i)}
+\Biggr)\\
+&
++ \bigl\{1-\tilde{\lambda}^{(T)}(\tau_k;\bm Z_i)\bigr\}
+\log\!\Biggl(
+\frac{1-\tilde{\lambda}^{(T)}(\tau_k;\bm Z_i)}
+     {1-\lambda^{(T)}(\tau_k;\bm Z_i)}
+\Biggr),
+\end{aligned}
+\end{equation*}
+where $\tilde{\lambda}^{(T)}(\tau_k;\bm Z_i)=\sum_{j=1}^J
+\tilde{\lambda}^{(T)}_j(\tau_k;\bm Z_i)$ and similarly for
+$\lambda^{(T)}(\tau_k;\bm Z_i)$.
+%The accumulated divergence replaces (\ref{eq: accumulative kl}) with
+%\[
+%\mathrm{D}_T(\tilde{P}\Vert P_{\boldsymbol r}) = \sum_{i=1}^n\sum_{k=1}^K  Y_{ik}\, d_T(\tilde{P}\Vert P_{\boldsymbol r};\bm Z_i,\tau_k).
+%\]
+%Introducing $T$ modifies only the KL component of the penalized objective, while the internal likelihood remains unchanged. 
+When $T=1$, the divergence $d_T$ reduces to the original form in (\ref{eq: kl}). For $T>1$, the softened teacher distribution places greater emphasis on the relative contrast among non-target risks, providing a principled mechanism for borrowing information about similarity structures across competing risks.
+This can be especially beneficial when risks exhibit strong associations or when teacher predictions encode dependence patterns that are weakly identifiable from limited internal samples. In practice, $T$ can be tuned jointly with $\eta$ via cross-validation. Details on this selection procedure are provided in Section~\ref{Tuning}. 
+
+
+\subsection{Estimation with Neural Networks}
+\cref{prop1} demonstrates that the penalized log-likelihood, $\ell_{\eta}(\boldsymbol{r})$, minimizes a convex combination of KL divergences between the working model and two extremes: one based solely on the internal cohort and the other solely on the teacher.
+
+\begin{proposition}
+    \label{prop1}
+  Let $P_n$ be the empirical probability measure on the internal cohort. For a given $\eta \geq 0$, the model $P_{\boldsymbol{r}}$ minimizing $(1-\alpha) \mbox{D}(P_n\parallel P_{\boldsymbol{r}}) + \alpha  \mbox{D}(\tilde{P}\parallel P_{\boldsymbol{r}})$
+is the distilled model in (\ref{eq:penalized-loglik0}), where $\alpha = \eta/(1+\eta)$. 
+\end{proposition}
+
+Thus, minimizing the convex combination, $P_{\boldsymbol{r}}$, seeks a distribution close to both the empirical internal distribution $P_n$ and the teacher distribution $\tilde{P}$, weighted by the tuning parameter. The objective is convex in the space of distributions. Therefore, the optimal distribution that minimizes the objective exists and is unique. \cref{prop2} below shows that the proposed method provides a structure that 
+is fully compatible with the original log-likelihood in \eqref{log l hazard competing}. 
+
+\begin{proposition}
+    \label{prop2}
+    Ignoring constant terms, the penalized log-likelihood in \eqref{eq:penalized-loglik0} is proportional to 
+    % \begin{equation*}
+    % \ell_{\eta}(\boldsymbol{r}) \propto \sum_{i=1}^n\sum_{k=1}^{K}  Y_{ik}\left ( \sum_{j=1}^J\left\{
+    % \frac{\delta_{ik}^{(j)} + \eta \tilde \lambda_j(\tau_k ; \bm{Z}_i)}{1 + \eta}r_j(\tau_k;\boldsymbol Z_{i})
+    % \right\} - \log\left [1+\sum_{j=1}^J\exp\{r_{j}(\tau_k;\boldsymbol{Z}_{i})\}\right ] \right ).
+    %     %\label{log l kl competing}  
+    % \end{equation*}
+    
+    \begin{align}
+    \ell_{\eta}(\boldsymbol r)
+    &\propto \sum_{i=1}^n \sum_{k=1}^K Y_{ik}
+    \Bigg[
+    \sum_{j=1}^J
+    \frac{\delta_{ik}^{(j)} + \eta \tilde{\lambda}_j(\tau_k;\bm Z_i)}{1+\eta}
+    r_j(\tau_k;\bm Z_i)
+    \nonumber\\
+    &\qquad\qquad
+    - \log\!\Bigl( 1 + \sum_{j=1}^J \exp\{\,r_j(\tau_k;\bm Z_i)\} \Bigr)
+    \Bigg].
+    \label{log l kl competing}  
+    \end{align}
+\end{proposition}
+To illustrate flexibility, we instantiate the hazard network with four neural architectures, originally developed for single-risk settings but extended here to competing risks: 
+(1) Net-Survival \citep{gensheimer2019scalable}: a lightweight Multilayer Perceptron (MLP) enforcing proportional hazards;
+(2) Logistic-Hazard \citep{kvamme2021continuous}: a feed-forward MLP outputting the hazard vector with time-dependent effects;
+(3) Time-Embedding: concatenates covariate and learnable time embeddings, processed by feed-forward layers for interval-specific outputs; and
+(4) Transformer \citep{hu2021transformer}: integrates covariate and time embeddings in a multi-head self-attention structure to capture temporal dependencies and complex interactions.
+
+\paragraph{Cumulative Incidence Function (CIF).}  Based on the proposed distillation procedure, the CIF \citep{gray1988class}, for each cause $j$, can be calculated as:
+% \begin{align}
+%     CIF_j(\tau)=P(D_i \leq \tau, \Delta_i=j|\boldsymbol Z_{i}) =\sum_{l=1}^k \lambda_j(t_l;\boldsymbol Z_{i})\prod_{l^*=1}^{l-1} \{1-\lambda(t_{l^*};\boldsymbol Z_i)\} \label{eq: CIF}
+% \end{align}
+\begin{align}
+    F_j(\tau_k; \bm Z_i)
+    &=
+    P\!\left(D_i \le \tau_k,\, \Delta_i=j \mid \bm Z_i\right)
+    \nonumber\\
+    &=
+    \sum_{l=1}^k
+    \lambda_j(\tau_l;\bm Z_i)
+    \prod_{l^*=1}^{\,l-1}
+    \bigl\{1-\lambda(\tau_{l^*};\bm Z_i)\bigr\},
+    \label{eq: CIF}
+\end{align}
+which quantifies absolute risk for a specific event type in the presence of competing events.
+
+
+\paragraph{Theoretical Foundations}  
+In appendix~\ref{app:prop6}, we analyze a low-dimensional discrete-time competing risks model to characterize negative transfer. We show that, even under teacher-student heterogeneity, there exists a range of distillation weights $\eta$ for which the proposed KL estimator achieves smaller asymptotic mean squared error (aMSE)  than the internal-only maximum likelihood estimator (MLE). 
+
+\section{Distillation with Outcome Heterogeneity}
+
+Section~\ref{s:model} assumes that student and teacher share the same definition of competing events. However, in practice, they often differ in outcome definitions and granularity. Specifically, we consider three heterogeneity scenarios: (1) overall risk versus competing risks; (2) cause-specific versus cause-specific risk; and (3) binary versus competing risks.
+
+\subsection{Distill Overall Risk to Competing Risks}
+In real-world applications, a common heterogeneity arises when internal data record multiple competing risks, whereas teachers capture only aggregated outcomes (e.g. overall mortality) and do not distinguish causes. To address this, we extend the distillation procedure. Utilizing the fact that the overall hazard is the sum of cause-specific hazards, we define a time-dependent Bernoulli KL divergence:
+% \begin{align*}
+% d(\tilde{P}\Vert P_{\boldsymbol{r}}; \tau_k, \boldsymbol{Z}_i)=\tilde{\lambda}(\tau_k, \boldsymbol{Z}_{i}) \log\left\{\frac{\tilde{\lambda}(\tau_k, \boldsymbol{Z}_{i})}{\sum_{j=1}^J\lambda_{j}(\tau_k, \boldsymbol{Z}_{i})}\right\}+\{1-\tilde{\lambda}(\tau_k, \boldsymbol{Z}_{i})\} \log\left\{\frac{1-\tilde{\lambda}(\tau_k, \boldsymbol{Z}_{i})}{1-\sum_{j=1}^J\lambda_{j}(\tau_k, \boldsymbol{Z}_{i})}\right\},
+% \end{align*}
+\begin{align*}
+d(\tilde P &\Vert P_{\boldsymbol r}; \tau_k, \bm Z_i)
+=
+\tilde{\lambda}(\tau_k;\bm Z_i)
+\log\!\Biggl(
+\frac{\tilde{\lambda}(\tau_k;\bm Z_i)}
+     {\sum_{j=1}^J \lambda_j(\tau_k;\bm Z_i)}
+\Biggr)
+\\
+&\quad+
+\bigl\{1-\tilde{\lambda}(\tau_k;\bm Z_i)\bigr\}
+\log\!\Biggl(
+\frac{1-\tilde{\lambda}(\tau_k;\bm Z_i)}
+     {1-\sum_{j=1}^J \lambda_j(\tau_k;\bm Z_i)}
+\Biggr),
+\end{align*}
+which quantifies the discrepancy between the overall-event teacher and the internal competing-risk student. The accumulated KL divergence across subjects in the internal cohort can then be defined analogously to \eqref{eq: accumulative kl}. 
+
+\begin{proposition}
+  \label{prop3}
+    The penalized log-likelihood, $\ell_{\eta}(\boldsymbol{r})=\ell(\boldsymbol{r})- \eta~ \mbox{D}(\tilde{P} \Vert  P_{\boldsymbol{r}})$, 
+     is proportional to 
+    % \begin{align*}
+    %     \ell_{\eta}(\boldsymbol{r}) \propto &\sum_{i=1}^n\sum_{k=1}^{K} Y_{ik}\left (\sum_{j=1}^J\left\{\delta_{ik}^{(j)}r_j(\tau_k;\boldsymbol Z_{i})\right\} + \eta\tilde{\lambda}(\tau_k, \boldsymbol{Z}_{i}) \log\left [\sum_{j=1}^J \exp\{r_j(\tau_k;\boldsymbol Z_{i})\}\right ] \right.\nonumber\\
+    % &\quad \left. - (1+\eta) \log\left [1+\sum_{j=1}^J \exp \{r_j(\tau_k;\boldsymbol Z_{i})\}\right ]\right). %\label{eq: FT Prior}
+    % \end{align*}
+    \begin{align*}
+    \ell_{\eta}(\bm r)
+    \propto\;
+    &\sum_{i=1}^n \sum_{k=1}^{K} Y_{ik}
+    \Bigg[
+    \sum_{j=1}^J \delta_{ik}^{(j)}\, r_j(\tau_k;\bm Z_i)
+    \\
+    &\quad
+    + \eta\,\tilde{\lambda}(\tau_k;\bm Z_i)\,
+    \log\!\Bigl(\sum_{j=1}^J \exp\{\,r_j(\tau_k;\bm Z_i)\}\Bigr)
+    \\
+    &\quad
+    - (1+\eta)\,
+    \log\!\Bigl(1+\sum_{j=1}^J \exp\{\,r_j(\tau_k;\bm Z_i)\}\Bigr)
+    \Bigg].
+    %\label{eq: FT Prior}
+    \end{align*}
+\end{proposition}
+This formulation provides a principled way to reconcile the mismatch between the overall risk teacher and the internal competing-risk student. 
+Conversely, if the teacher is a competing-risk model but the student target is an overall event, we can still transfer knowledge by collapsing the teacher’s cause-specific hazards into an overall hazard.
+
+% \subsection{Distill Classification Model to Competing Risks}
+% Another common type of heterogeneity arises when external models provide only binary outcome predictions within a fixed time window, without modeling the full time-to-event distribution. For example, an external model may predict whether death from a specific cause occurs within 30 days, without indicating when during that period the event occurs. In contrast, our internal model operates under a discrete-time competing risks framework, as described in Section~\ref{section: Internal}, and estimates detailed cause-specific hazards at each time interval.
+
+% Specifically, suppose the external model focuses solely on a binary outcome indicating whether the primary event (denoted as event~1 as default) occurs by a prespecified time point \(\tau_K\), ignoring any detailed timing or competing risks. Formally, the external model provides predictions for the cumulative probability:
+% \begin{equation}
+%     \tilde{F}_1(\tau_K; \bm{Z}_i) = 
+%     \sum_{l=1}^K \tilde{P}(T^*=\tau_l, \Delta_i=1 \mid \bm{Z}_i) 
+%     % = \sum_{l=1}^K \lambda_{j}(\tau_l; \bm{Z}_i) \prod_{m=1}^{l - 1}(1-\lambda(\tau_m; \bm{Z}_i))
+%     ,
+% \end{equation}
+% which corresponds precisely to the cumulative incidence function (CIF) for event~1 at time \(\tau_K\), conditional on covariates \(\bm{Z}_i\).
+
+% Although our internal model directly estimates cause-specific hazards over discrete time intervals, these hazards naturally induce the cumulative incidence function (CIF). In particular, the internal CIF for event~1 at time \(\tau_K\) is expressed as:
+% \begin{equation}
+%     F_1(\tau_K; \bm{Z}_i) = 
+%     \sum_{l=1}^K P(T^*=\tau_l, \Delta_i=1 \mid \bm{Z}_i) = 
+%     \sum_{l=1}^K \lambda_{1}(\tau_l; \bm{Z}_i) \prod_{m=1}^{l - 1}(1 - \lambda(\tau_m; \bm{Z}_i)).
+% \end{equation}
+
+% Therefore, we can define a Bernoulli KL divergence at the subject level, quantifying the discrepancy between the external binary predictions and our internal CIF predictions:
+% \begin{eqnarray}
+%  d(\tilde{P} \Vert  P_{\boldsymbol{\theta}};\bm{Z}_i) = \tilde{F}_{1}(\tau_k; \bm{Z}_{i}) \log\left\{\frac{\tilde{F}_{1}(\tau_k; \bm{Z}_{i})}{F_{1}(\tau_k;\bm{Z}_{i})}\right\} +\{1-\tilde{F}_{1}(\tau_k; \bm{Z}_{i})\} \log\left\{\frac{1-\tilde{F}_{1}(\tau_k; \bm{Z}_{i})}{1-F_{1}(\tau_k;\bm{Z}_{i})}\right\}.
+% \end{eqnarray}
+% Aggregating across all subjects, we obtain the total KL divergence:
+% \begin{equation}
+% D(\tilde{P}\Vert P_{\boldsymbol{\theta}})
+% =\sum_{i=1}^n d(\tilde{P}\Vert P_{\boldsymbol{\theta}};\bm{Z}_i).
+% \end{equation}
+% Finally, the penalized log-likelihood combining detailed internal competing risks data and simplified external binary predictions becomes:
+% \begin{equation}
+%   \ell_{\eta}(\boldsymbol{\theta}) = \ell(\boldsymbol{\theta})- \eta~ \mbox{D}(\tilde{P} \Vert  P_{\boldsymbol{\theta}}).
+% \end{equation}
+% where \(\ell(\boldsymbol{\theta})\) is the standard log-likelihood from the internal competing risks model, and \(\eta > 0\) controls the strength of regularization from the external information.
+
+% This formulation enables distillation of simplified external predictions with detailed internal modeling, without requiring structural alignment between the two sources. By aligning the internal CIF with externally predicted binary risks through KL regularization, the framework leverages complementary information while preserving the granularity and interpretability of the internal competing risks model.
+
+
+
+
+\subsection{Distill Specific Risk to Specific Risk}
+\label{sec.specific}
+In some applications, interest centers on a single event type (e.g. disease-specific death),  while other competing risks are infrequent or  uninformative. In such settings, it is common to treat non-primary risks as censoring and model the cause-specific hazard for the event of interest~\citep{lee2018analysis,wu2022analysis}. %This  “one-vs-all’’ formulation simplifies  estimation when competing events are rare.  
+To formalize this “one-vs-all’’ approach, the proposition below shows that it yields a composite conditional likelihood for the primary cause-specific hazard, justifying its use in practice. 
+\begin{proposition}
+  \label{prop4}
+  Assume $j=1$ denotes the primary event of interest. The 
+“one-vs-all’’ formulation,
+\begin{align}
+   L
+   & = 
+   \prod_{i =1}^n \prod_{k=1}^{K} \left[\lambda_1(\tau_k;\bm Z_i)^{\delta_{ik}^{(1)}} \{1-\lambda_1(\tau_k;\bm Z_i)\}^{1-\delta_{ik}^{(1)}}\right]^{Y_{ik}}, \nonumber
+% \label{eq:loglkdgeneral}  
+\end{align}
+can be viewed as a composite conditional likelihood.
+\end{proposition}
+\cref{prop4} ensures that the “one-vs-all” approach is valid. It targets the cause-specific hazard without assuming independence among competing risks. In contrast,  naively treating competing risks as censoring and targeting the marginal hazard is generally invalid, since it implicitly assumes independence and attempts to estimate a quantity that is not identifiable when competing risks are correlated. 
+
+Given that both student and teacher focus on the same primary event of interest, knowledge can be distilled through the discrete-time hazard-based KL divergence:
+% \begin{eqnarray*}
+%  d(\tilde{P} \Vert  P_{\boldsymbol{r}};\bm{Z}_{i}, \tau_k) 
+%  &=&
+%  \tilde{\lambda}_{1}(\tau_k; \bm{Z}_{i}) 
+%  \log\left\{\frac{\tilde{\lambda}_{1}(\tau_k; \bm{Z}_{i})}{\lambda_{1}(\tau_k;\bm{Z}_{i})}\right\} 
+%  + \{1-\tilde{\lambda}_{1}(\tau_k; \bm{Z}_{i})\}
+%  \log\left\{\frac{1-\tilde{\lambda}_{1}(\tau_k; \bm{Z}_{i})}{1-\lambda_{1}(\tau_k;\bm{Z}_{i})}\right\}.
+% \end{eqnarray*}
+\begin{align*}
+d(\tilde{P} \Vert P_{\boldsymbol r}; & \tau_k, \bm Z_i)
+=
+\tilde{\lambda}_{1}(\tau_k; \bm Z_i)
+\log\!\Biggl(
+\frac{\tilde{\lambda}_{1}(\tau_k; \bm Z_i)}
+     {\lambda_{1}(\tau_k; \bm Z_i)}
+\Biggr)
+\\
+&+
+\bigl\{1-\tilde{\lambda}_{1}(\tau_k; \bm Z_i)\bigr\}
+\log\!\Biggl(
+\frac{1-\tilde{\lambda}_{1}(\tau_k; \bm Z_i)}
+     {1-\lambda_{1}(\tau_k; \bm Z_i)}
+\Biggr).
+\end{align*}
+
+\begin{proposition}
+  \label{prop5}
+Integrating the corresponding accumulated KL divergence into the internal log-composite likelihood yields the penalized objective function:
+% \begin{equation}
+%   \ell_{\eta}(\boldsymbol{r}) \propto 
+%   \sum_{i=1}^n\sum_{k=1}^{K} 
+%   Y_{ik}\left[
+%     \frac{\delta_{ik}^{(1)} + \eta \tilde{\lambda}_{1}(\tau_k; \bm{Z}_{i})}{1 + \eta}
+%     \log \left\{\frac{\lambda_{1}(\tau_k ; \mathbf Z_i)}{1-\lambda_{1}(\tau_k ; \mathbf Z_i)}\right\}
+%     + \log \left\{1-\lambda_{1}(\tau_k ; \mathbf Z_i)\right\}
+%   \right],
+%   \label{log l prior hazard}
+% \end{equation}
+\begin{align}
+    \ell&_{\eta}(\boldsymbol r)
+    \propto
+    \sum_{i=1}^n\sum_{k=1}^K Y_{ik} \Bigg[\frac{\delta_{ik}^{(1)}+\eta\,\tilde{\lambda}_1(\tau_k;\bm Z_i)}{1+\eta}
+    \Bigl\{\log \lambda_1(\tau_k;\bm Z_i) \nonumber\\
+    &
+    - \log\bigl\{1-\lambda_1(\tau_k;\bm Z_i)\bigr\}\Bigr\}
+    + \log\bigl\{1-\lambda_1(\tau_k;\bm Z_i)\bigr\}
+    \Bigg].  
+    \label{log l prior hazard}
+\end{align}
+\end{proposition}
+%where $\eta$ controls the strength of information borrowing from external predictions. 
+%This formulation is equivalent to a weighted discrete logit log-likelihood. %, with pseudo-labels $\{\delta_{ik}^{(1)} + \eta \tilde{\lambda}_{1}(\tau_k; \bm{Z}_{i})\}/(1+\eta)$ representing a convex combination of empirical and external risks.
+The resulting ``specific-to-specific'' distillation stabilizes parameter estimation when competing risks are sparse. 
+
+
+\subsection{Distill Binary Outcome Model to Competing Risks}
+\label{sec.binary}
+Another heterogeneity arises when teachers provide only binary predictions over a time window (e.g. whether the primary event (denoted as event~1) occurs by \(\tau_K\)), without modeling event timing or competing risks. Such prediction corresponds to the CIF,
+%defined in \eqref{eq: CIF},
+%\begin{equation*}
+    $\tilde{F}_1(\tau_K; \bm{Z}_i) = 
+    \sum_{l=1}^K \tilde{P}(D_i=\tau_l, \Delta_i=1 \mid \bm{Z}_i)$.  
+    % = \sum_{l=1}^K \lambda_{j}(\tau_l; \bm{Z}_i) \prod_{m=1}^{l - 1}(1-\lambda(\tau_m; \bm{Z}_i)),
+%\end{equation*}
+Because the student’s cause-specific hazards determine the CIF through~\eqref{eq: CIF}, we define a Bernoulli KL divergence quantifying the discrepancy between the teacher binary predictions and student CIF predictions:
+\begin{eqnarray*}
+ & d(\tilde{P} \Vert  P_{\boldsymbol r}; \tau_K, \bm{Z}_i) = \tilde{F}_{1}(\tau_K; \bm{Z}_{i}) \log\!\Biggl(\frac{\tilde{F}_{1}(\tau_K; \bm{Z}_{i})}{F_{1}(\tau_K;\bm{Z}_{i})}\Biggl) \\
+&\quad +\{1-\tilde{F}_{1}(\tau_K; \bm{Z}_{i})\} \log\left\{\frac{1-\tilde{F}_{1}(\tau_K; \bm{Z}_{i})}{1-F_{1}(\tau_K;\bm{Z}_{i})}\right\}.
+\end{eqnarray*}
+% This formulation enables integration of simplified external predictions with detailed internal modeling, without requiring structural alignment between the two sources. By aligning the internal CIF with externally predicted binary risks through KL regularization, the framework leverages complementary information while preserving the granularity and interpretability of the internal competing risks model.
+This instantiation distills simplified teacher predictions into a detailed student without  requiring structural alignment between the two sources.
+In effect, the distillation leverages complementary information while preserving the granularity and interpretability of the student competing risks model.
+
+
+\section{Experiment}
+% external knowledge 在不同信息形态下怎么融进 local competing risks 学习
+% Simulation：可控条件下看“该发生的现象”是不是发生（机制、单因素解释）
+% Benchmarks：在常用数据集上给出“默认可信”的经验提升（不是你自己造的场景）
+% SRTR1：说明这不是 academic-only，真实异质/漂移/变量缺失下也能用
+% SRTR2：在蒸馏、模型简化需求下也能提升性能
+Our experiments study when and how predictive knowledge encoded in a teacher survival model can be transferred to a discrete-time competing-risks student model through DiSKD when the teacher is learned under various heterogeneous scenarios. The empirical study is organized around four questions:
+(i) in simulations, do the predicted behaviors of DiSKD emerge under covariate shift, teacher misspecification, and limited internal sample size;
+(ii) on benchmark survival datasets, does DiSKD deliver consistent improvements over internal-only training, and are the gains robust across neural architectures and stable under degraded teacher information;
+(iii) in the Scientific Registry of Transplant Recipients (SRTR), can DiSKD support model updating when the target cohort exhibits temporal and geographic distribution shifts and the historical teacher is trained under a different regime with covariate and outcome mismatches; and
+(iv) in a second SRTR case study, do the gains persist when the downstream objective is deployability rather than capacity; i.e. distilling an updated high-capacity teacher into a donor-only student with constrained covariates, enabling donor-quality assessment at the time of allocation.
+
+
+\subsection{Metrics}
+% Model performance was evaluated using the time-dependent concordance index ($C^{td}$) for discrimination and predictive deviance, integrated brier score (IBS), and integrated negative binomial log-likelihood (IBLL) for calibration and overall predictive accuracy~\citep{antolini2005time, lee2018deephit, burnham1998practical, tutz2016modeling, graf1999assessment, gerds2006consistent, kvamme2019time}.
+% For interpretability, we use SHAP and summarize feature-selection stability by the Jaccard index~\citep{lundberg2017unified, vo2024explainability}.
+% Definitions and implementation details are deferred to Appendix~\ref{A.Metrics}.
+
+For competing risks, we evaluate discrimination using the cause-specific time-dependent concordance index ($C^{td}$), computed separately for each cause as in~\citep{antolini2005time, lee2018deephit}, and summarize overall fit using predictive deviance~\citep{burnham1998practical, tutz2016modeling}.
+For single risk, we additionally report integrated Brier score (IBS) and integrated binomial log-likelihood (IBLL), to capture calibration and overall predictive accuracy over time~\citep{gerds2006consistent, graf1999assessment, kvamme2019time, graf1999assessment, kvamme2019time}.
+For interpretability, we use SHAP and summarize feature-selection stability by the Jaccard index~\citep{lundberg2017unified, vo2024explainability}.
+Definitions and implementation details are deferred to Appendix~\ref{A.Metrics}.
+
+
+
+
+\subsection{Tuning Parameter Selection}
+\label{Tuning}
+%\paragraph{Training.} DiSKD implementation proceeded in two stages. First, an teacher model was trained on the external dataset. Second, a student model was trained on the internal dataset, with KL-based distillation of the external predictions. Although DiSKD can be implemented with various neural architectures, Transformer-based networks were used as the default across all experiments.
+% All models were implemented in Python 3.9 with PyTorch 1.12.1. Training ran for up to 128 epochs, with early stopping after 5 epochs of no improvement in validation loss.
+%\paragraph{Tuning parameter selection.} 
+We tuned hyperparameters via 5-fold cross-validation using \texttt{Optuna} with the Tree-structured Parzen Estimator (TPE) sampler~\citep{optuna_2019}.
+The search space covered the number of layers, hidden units, dropout rate, batch size, and learning rate. 
+Compared with grid search, TPE avoids committing to a rigid, hand-crafted grid when reasonable ranges are unclear (as is often the case for $(T,\eta)$, whose optimal values depend on the relative strength of teacher and student information).
+Instead, the Bayesian sampler adaptively refine toward high-performing regions based on observed validation deviance, which reduces the risk of missing good settings due to an overly coarse or mis-specified grid.
+Additional details are provided in Appendix~\ref{A.ImpleDetails}.
+
+
+
+
+\subsection{Simulation}
+% To evaluate the effectiveness of DiSKD, we conducted a simulation study designed to assess how much the internal model (trained on limited data) can be improved by integrating external predictions. These experiments systematically quantify the gains from incorporating external information under various forms of heterogeneity and model misalignment.
+
+%We also study  the role of temperature $T$ in distilling correlated cause-specific hazards.
+
+To assess robustness under increasing heterogeneity, we consider scenarios with outcome mismatch, teacher misspecification, and covariate shift.  We simulate two correlated competing risks.
+We draw a teacher-training set ($n=10{,}000$), a small internal student-training set ($n=500$), and an independent test set ($n=5{,}000$) from the same distribution. %Details are provided in Appendix~\ref{A.ImpleDetails}.
+
+
+\paragraph{Outcome Mismatch.}
+\label{Sim.data}
+We compare an internal-only baseline with two DiSKD variants: (1) DiSKD-C, where the teacher is a competing-risks model that provides cause-specific hazard sequences for each risk; and (2) DiSKD-O, where the teacher is an overall-event model that provides only the aggregated hazard sequence. 
+
+
+\paragraph{Teacher Misspecification.}
+To assess robustness to teacher quality, we considered three scenarios reflecting different quality levels: (a) Good, (b) Fair, and (c) Poor. Details are provided in Appendix~\ref{A.SimSettings}. 
+As shown in Figure~\ref{fig_compet_1:boxplot}, when the teacher is of good quality, DiSKD-C attains the highest $C^{td}$ for both risks and the lowest predictive deviance, clearly outperforming DiSKD-O. As teacher quality declines, however, the performance gap between DiSKD-C and DiSKD-O diminishes across both metrics, indicating that overall hazard predictions (DiSKD-O) become nearly as informative as cause-specific predictions when external covariate information is limited. Sensitivity to the distillation weight $\eta$ was also examined in Appendix~\ref{A.Sim.Eta}.
+
+%We also examine sensitivity to the distillation weight $\eta$, which controls the strength of KL guidance.cWhen the teacher is high quality, larger $\eta$ tends to yield larger gains, consistent with stronger reliance on accurate teacher predictions. In contrast, under degraded teacher quality the performance curves flatten and become less sensitive to $\eta$, indicating that DiSKD down-weights unreliable guidance and mitigates negative transfer (Appendix~\ref{A.Sim.Eta}).
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{Figs/compet/External data 3/compet/boxplot_TE_MIS_all_h2_h3_compact.png}
+\caption{
+$C^{td}$ for each risk and predictive deviance on the simulated test set.
+% Simulation results under varying teacher covariate quality.
+Teacher quality levels (a–c) correspond to progressively reduced covariate availability in the teacher.
+% The tuning parameter $\eta$ was selected using 5-fold cross-validation on the internal training set.
+Results were summarized over 20 random seeds.
+% Higher $C^{td}$ and lower predictive deviance indicate better predictive performance.
+}
+\label{fig_compet_1:boxplot}
+\end{figure}
+
+% \begin{figure}[h]
+% \centering
+% \begin{subfigure}{\columnwidth}
+%     \caption{Good-quality external model}
+%     % \vspace{-0.2cm}
+%     \includegraphics[width=\columnwidth]{Figs/compet/External data 1/compet/boxplot_TE_all.png}
+%     \vspace{-0.6cm}
+%     \label{Box_fig_compet:first}
+% \end{subfigure}
+% \hfill
+% \begin{subfigure}{\columnwidth}
+%     \caption{Fair-quality external model}
+%     % \vspace{-0.2cm}
+%     \includegraphics[width=\columnwidth]{Figs/compet/External data 1/compet/boxplot_TE_h1.png}
+%     \vspace{-0.6cm}
+%     \label{Box_fig_compet:second}
+% \end{subfigure}  
+% % \hfill
+% % \begin{subfigure}{1.0\textwidth}
+% %     \caption{Poor-quality external model}
+% %     % \vspace{-0.2cm}
+% %     \includegraphics[width=\textwidth]{Figs/compet/External data 1/compet/boxplot_TE_h2.png}
+% %     \vspace{-0.2cm}
+% %     \label{Box_fig_compet:third}
+% % \end{subfigure}  
+% \hfill
+% \begin{subfigure}{\columnwidth}
+%     \caption{Poor-quality external model}
+%     % \vspace{-0.2cm}
+%     \includegraphics[width=\columnwidth]{Figs/compet/External data 1/compet/boxplot_TE_h3.png}
+%     \vspace{-0.6cm}
+%     \label{Box_fig_compet:forth}
+% \end{subfigure}  
+% \caption{
+% Test set $C^{td}$ and predictive deviance under varying external model quality settings (a–d) for simulated competing risks data. 
+% We compare three modeling strategies:
+% (1) Internal: trained on the internal dataset only using all covariates;  
+% (2) DiSKD-C: distillation using external cause-specific hazard predictions from a competing risks model;
+% (3) DiSKD-O: a variation of distillation using external overall hazard predictions from an overall event model.
+% % (3) DiSKD-B: a variation of our KL-based knowledge distillation using external binary predictions (i.e. event with 1st risk occurrence before $\tau_K$) from a Catboost-based binary classification model.
+% Each panel (a–c) corresponds to a different external model quality level, reflecting varying degrees of covariate availability. 
+% % The tuning parameter $\eta$ was selected using 5-fold cross-validation on the internal training set.
+% % Results were averaged over 20 random splits of simulated competing risks data. Higher $C^{td}$ and lower predictive deviance indicate better predictive performance.
+% }
+% \label{fig_compet_1:boxplot}
+% \end{figure}
+
+
+\paragraph{Covariate-Shift Robustness.}
+In Appendix~\ref{A.Sim.Hetero}, we evaluate robustness to covariate distribution shift between teacher and student populations. Even under severe shift where the teacher alone can be miscalibrated on the internal test set, DiSKD remains beneficial relative to the internal-only baseline and does not exhibit negative transfer.
+
+\paragraph{Temperature for Correlated Competing Risks.}
+Temperature scaling makes cross-risk information usable in the KL term: for $T>1$, the teacher distribution is softened so that non-target risks retain non-negligible mass, allowing the student to learn relative contrasts across causes rather than an effectively one-hot signal. To assess this effect, we vary $T\in \{1,2,3,4,5\}$ under a good-quality teacher and report test-set $C^{td}$ and predictive deviance in Figure~\ref{fig_compet_1:tempplot}.
+At $T=1$, DiSKD-C exhibits noticeably larger variability and weaker average performance. Moving to $T=2$ substantially improves both stability and predictive accuracy, while results change little for $T\ge 3$, indicating a practical plateau once the guidance is sufficiently softened. 
+
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{Figs/compet/External data 3/compet/boxplot_TE_temp.png}
+\caption{
+Effect of distillation temperature $T$ on the predictive performance of DiSKD-C under a high-quality teacher. 
+$C^{td}$ for each risk and the predictive deviance on the test set were reported. 
+% While $T=1$ leads to unstable and highly variable performance due to overly sharp teacher predictions, temperatures in the range $T=2$--$3$ substantially improve stability and predictive accuracy. Performance plateaus for larger temperatures ($T \ge 3$), indicating that once the teacher distribution is sufficiently softened, the KL penalty provides consistent guidance to the student model. 
+Results were summarized over 20 random seeds.
+}
+\label{fig_compet_1:tempplot}
+\end{figure}
+
+
+\paragraph{Distilling Single Target Risk.}
+To reflect settings that focus on one prioritized event, we evaluate the collapsed distillation approach (DiSKD-S) described in Section~\ref{sec.specific}. Across all teacher-quality regimes, DiSKD-S improves both $C^{td}$ and predictive deviance relative to the internal-only baseline, indicating that KL-based guidance remains beneficial even under single-risk supervision (Appendix~\ref{A.Sim.Specific}).
+
+
+
+\subsection{Benchmark Survival Datasets}
+\label{sec:bench}
+%We evaluate DiSKD on widely used real-world survival benchmarks to test whether the mechanism-driven gains seen in simulation translate to standard datasets, and whether DiSKD remains effective across discrete-time architectures and under teacher degradation.
+
+\paragraph{Datasets.}
+We consider three benchmark survival datasets: SUPPORT, METABRIC, and Rotterdam \& GBSG \citep{knaus1995support, curtis2012genomic, foekens2000urokinase, schumacher1994randomized}.
+Dataset descriptions and preprocessing details are provided in Appendix~\ref{A.BenchmarkSettings}.
+%On SUPPORT, we also quantify how internal sample size affects accuracy and stability: smaller internal cohorts lead to weaker and more variable test performance across random splits, while both accuracy and stability improve steadily as training size increases (Appendix~\ref{A.BenchmarkResults.SampleSize}).
+
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=\textwidth]{Figs_icml/DiSKD.drawio.png}
+\caption{Evidence of distribution shift and benefits of DiSKD.
+(a) temporal changes in event rates across COVID and policy eras; (b) training dynamics under early stopping; (c) test performance across strategies; (d) risk-stratified CIF trajectories for death and graft failure.}
+\label{fig_srtr:results}
+\end{figure*}
+
+\paragraph{Consistent Gains Across Datasets and Architectures.}
+We consider a held-out test set (20\%), a small internal student cohort (4\%), and a larger teacher cohort (76\%). On SUPPORT, we evaluate DiSKD across multiple discrete-time architectures and systematically degrade the teacher by restricting its covariate set, inducing a controlled loss of informativeness. On METABRIC and Rotterdam \& GBSG, we fix a strong backbone (Transformer) and use all covariates to focus on cross-dataset generalization. Overall, DiSKD improves over internal-only training across datasets and architectures, and remains robust as the teacher is degraded, suggesting a general mechanism for leveraging teacher survival predictions across cohorts with differing event profiles and covariate structures (Appendix~\ref{A.BenchmarkResults.Tables}).
+
+
+
+
+
+
+\subsection{SRTR Model Updating Under Population Shifts}
+\label{SRTR1}
+We study SRTR model updating across pandemic- and policy-driven regime change, transferring one-year death and graft-failure risk from a large, shifted COVID+KAS250 cohort (teacher) to a post-COVID target cohort (student), see Appendix~\ref{A.SRTRSettings}. This setting features practical mismatches: temporal/geospatial drift with event-rate shift (often yielding miscalibration; Figure~\ref{fig_srtr:results}a; Appendix~\ref{A.SRTR1.Temporal}), limited access to the teacher (predictions only), different covariate availability, and partially aligned outcomes (e.g. aggregated or single-cause guidance). DiSKD is designed to accommodate such heterogeneous teacher information.
+
+% We evaluate improvement using both discrimination and calibration metrics and further examine training dynamics and risk-stratified CIF trajectories to diagnose how distillation improves generalization under shift, with full details deferred to Appendix~\ref{A.SRTRResults}.
+
+
+
+
+
+
+
+
+\paragraph{Evaluation Protocol.}
+We discretize follow-up into weekly intervals and fit discrete-time competing-risks models using donor/recipient covariates and transplant-center indicators. Methods are evaluated on the post-COVID cohort using 10 repeats of 5-fold cross-validation. We compare six strategies: (1) Internal (post-COVID only), (2) Teacher (COVID+KAS250 applied to post-COVID), (3) Stacked (pooled training), (4) Finetune (initialized from the teacher and fine-tuned on post-COVID), (5) Finetune+DiSKD, and (6) DiSKD (post-COVID with KL guidance).
+
+
+
+
+
+\paragraph{Stabilized Updating Dynamics.}
+On the post-COVID cohort, the internal-only model overfits quickly: validation deviance improves briefly then deteriorates. In contrast, DiSKD improves steadily and converges to lower deviance, with later stopping points (Figure~\ref{fig_srtr:results}b). The teacher is competitive but plateaus above DiSKD, reflecting residual COVID-to-post-COVID shift. Overall, DiSKD stabilizes updating and improves accuracy while reducing overfitting.
+
+
+
+
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=\columnwidth]{Figs_icml/SRTR/covid/Epoch_TR.png}
+% \caption{
+% Training dynamics comparison under the data using the COVID external cohort.
+% All models are discrete-time competing risks models implemented with the same Transformer architecture, trained on the internal post-COVID cohort (Internal), or integrated with external guidance via KL-based distillation (DiSKD). The External curve represents the performance of a model trained solely on the COVID cohort and evaluated on the post-COVID data.
+% The plots show the evolution of (a) $C^{td}$ for death (C-index-1), (b) $C^{td}$ for graft failure (C-index-2), and (c) predictive deviance on the internal test set across training epochs. Markers indicate early stopping points when validation loss failed to improve for five consecutive epochs. 
+% Internal training exhibits rapid overfitting and unstable validation performance, whereas DiSKD stabilizes optimization, delays early stopping, and achieves substantially higher performance. The External model performs well initially but remains consistently below the best DiSKD plateau, reflecting distributional shift between COVID and post-COVID cohorts.
+% }
+% \label{SRTR_overfitting:covid}
+% \end{figure}
+
+
+
+
+
+\paragraph{Robustness to Heterogeneity.}
+DiSKD provides the best concordance–deviance trade-off, outperforming the internal baseline, COVID-era teacher, and stacking (Figure~\ref{fig_srtr:results}c). Stacking yields modest, less reliable gains, and finetuning improves over the teacher but remains below DiSKD; Finetune+DiSKD is comparable to DiSKD, suggesting the KL term drives the benefit. DiSKD remains robust when the teacher architecture varies and covariates are degraded, typically outperforming internal-only and direct teacher deployment (Appendix~\ref{A.SRTR1.TeacherHetero}).
+
+
+
+
+\paragraph{Risk Stratification.}
+ Using predicted one-year CIFs on held-out post-COVID patients, we split by the median into high/low-risk groups and plot mean CIF trajectories (Figure~\ref{fig_srtr:results}d). For both death and graft failure, DiSKD yields a larger, more persistent separation than internal-only training, indicating improved discrimination on an absolute-risk scale relevant to allocation-time decisions.
+
+
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=\columnwidth]{Figs/SRTR/covid/group_one_seed.png}
+% \caption{
+% Risk group discrimination based on predicted CIFs on the post-COVID test set.
+% Recipients are stratified into high- and low-risk groups (upper and lower 50\%) according to the predicted one-year CIF for each endpoint, and the group-level mean predicted CIF trajectories are plotted over days after transplant.
+% The left panel corresponds to death and the right panel to graft failure.
+% Solid and dashed curves denote the high- and low-risk groups, respectively, with DiSKD and the internal-only model shown for comparison.
+% Shaded bands reflect within-group variability across individuals in the test set.
+% }
+% \label{fig_srtr:cif prediction}
+% \end{figure}
+
+
+%\paragraph{Results IV: stable clinical interpretation.}
+
+
+
+\paragraph{Collapsed-Risk Distillation.}
+In practice, transplant analyses often target a single endpoint and treat other events as censoring, so teacher guidance is frequently available only for that endpoint.
+We therefore evaluate DiSKD under three pairings:
+(i) competing risks $\rightarrow$ competing risks,
+(ii) death-specific $\rightarrow$ death-specific, and
+(iii) graft-failure-specific $\rightarrow$ graft-failure-specific.
+Figure~\ref{SRTR_single} compares discrimination across teacher covariate quality (as in Appendix~\ref{A.SRTR1.TeacherHetero}) for death (panel~a) and graft failure (panel~b). Across endpoints and quality levels, DiSKD-S matches competing-risks performance and improves over internal-only training. %, showing it can use either full or single-endpoint teacher guidance.
+
+
+
+
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}{0.99\columnwidth}
+    \caption{Primary event: Death.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs_icml/SRTR/covid/boxplot_TR_Cindex_data_COVID_single_1.png}
+    \vspace{-0.2cm}
+    \label{SRTR_single_1:covid}
+\end{subfigure}
+% \hfill
+\par\vspace{-4mm}
+\begin{subfigure}{0.99\columnwidth}
+    \caption{Primary event: Graft failure.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs_icml/SRTR/covid/boxplot_TR_Cindex_data_COVID_single_2.png}
+    \vspace{-0.4cm}
+    \label{SRTR_single_2:covid}
+\end{subfigure}
+\caption{
+Comparison of model discrimination between competing-risk (DiSKD-C) and single-risk (DiSKD-S) formulations on the post-COVID cohort.  
+% All models are discrete-time survival models evaluated with the $C^{td}$ under 10 repeated 5-fold cross-validation.  
+% Panel~(a) reports results when death is modeled as the primary event, and Panel~(b) when graft failure is modeled as the primary event.  
+% Within each panel, Quality (a–c) represents three levels of external model quality:
+% (a) all covariates, 
+% (b) excluding transplant center indicators, 
+% and (c) using only variables selected by the SRTR risk-adjusted model. 
+% DiSKD-C and DiSKD-S denote the competing-risk and single-risk implementations of the proposed framework, respectively.  
+% Results show that the single-risk (collapsed) formulation achieves comparable or slightly improved discrimination when non-primary events are rare or weakly informative, suggesting its practical utility for focused outcome modeling in sparse competing-risk settings.
+}
+\label{SRTR_single}
+\end{figure}
+
+
+
+\subsection{SRTR Donor-Quality Prediction}
+Kidney donor allocation decisions require accurate donor-only risk prediction computed immediately at organ offer. We therefore examine whether an updated donor+recipient+center model (strengthened via DiSKD) can be distilled into a deployable donor-only tool aligned with Kidney Donor Risk Index (KDRI). Using the post-COVID competing-risks model as the teacher, we distill cause-specific hazards for death and graft failure into a lightweight donor-only student under two feature sets: all donor variables and a KDRI-compatible subset (eight donor factors). We compare against a donor-only model without distillation and against KDRI; full details are in Appendix~\ref{A.SRTRSettings2}.
+
+Figure~\ref{KD_boxplots} summarizes post-COVID cause-specific discrimination. The donor-only baseline trained on post-COVID data is close to KDRI, indicating limited gains from refitting alone. In contrast, the distilled donor-only student achieves higher $C^{td}$ for death and graft failure, showing that DiSKD transfers signal from a richer donor+recipient+center teacher into a deployable donor-only predictor. These gains persist under KDRI-compatible inputs: with only the eight KDRI donor factors (Figure~\ref{KD_boxplots}b), distillation improves over the donor-only baseline and exceeds KDRI. Operationally, DiSKD compresses a competing-risks model into a donor-only tool while preserving the familiar KDRI-style interface for organ-offer decisions.
+
+
+
+
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}{0.85\columnwidth}
+    \caption{Student model with all donor-related covariates.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs/SRTR/covid_dist/boxplot TR h2.png}
+    \vspace{-0.2cm}
+    \label{SRTR_box:pre_covid}
+\end{subfigure}
+% \hfill
+\par\vspace{-4mm}
+\begin{subfigure}{0.85\columnwidth}
+    \caption{Student model with eight KDRI donor factors.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs/SRTR/covid_dist/boxplot TR h1.png}
+    \vspace{-0.4cm}
+    \label{KD:TR_donor}
+\end{subfigure}  
+\caption{Discrimination comparison of donor-only student models on the post-COVID test cohort. 
+% The teacher is a Transformer-based discrete-time competing risks model integrated with external information from the COVID cohort using all covariates (donor, recipient, and transplant center). 
+% The student is a donor-only model trained via knowledge distillation from the teacher. 
+% Panel (a) uses all donor-related covariates available in SRTR; Panel (b) restricts inputs to the eight donor factors used in the current KDRI formulation. 
+% Each boxplot reports the cause-specific $C^{td}$ for death (Risk~1) and graft failure (Risk~2), over 10 repeated 5-fold cross-validations. 
+The red dashed line indicates the performance of the KDRI benchmark.}
+\label{KD_boxplots}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+\section{Discussion}
+We proposed a KL-based knowledge distillation framework for discrete-time competing risks that aligns student hazards with teacher predictions, offering a principled alternative to pooling or finetuning in data-limited, heterogeneous, and privacy-constrained settings. Simulations showed improved discrimination and calibration, robust even under degraded teacher inputs, and SRTR applications demonstrated consistent gains over internal-only, teacher-only, stacked, and finetuning strategies despite a substantial temporal shift. We further showed that DiSKD remains effective under collapsed-risk analyses targeting a single event, clarifying that while such models estimate cause-specific hazards rather than marginal risks, distillation can still transfer useful teacher information when this aligns with the analytic goal.
+
+%In registry settings like SRTR with rolling cohort updates, DiSKD naturally supports iterative model updating: previously trained models can act as teachers for new cohorts, enabling adaptation to policy, practice, and pandemic-induced shifts without sharing historical patient-level data. Because distillation operates solely on predicted hazards, it accommodates heterogeneous model structures and stabilizes deep survival training under limited data.
+
+The proposed framework can be extended in several directions. In related work, \citet{ConcurrentWork1} study KL-based incorporation of teacher group-level information for deep Cox models, while \citet{ConcurrentWork2} develop a component-wise KL distillation approach for composite-likelihood objectives on comparability sets, conceptually and computationally distinct from the discrete-time competing-risks setting considered here.
+
+Overall, DiSKD provides a flexible, interpretable, and privacy-conscious distillation framework for knowledge transfer in evolving clinical environments.
+
+
+% \subsection{Rationale for Hazard-Level Modeling}
+% \label{sec:hazard_vs_cif}
+
+% Instead of modeling the event-time distribution through a probability mass function (PMF) directly—as done in DeepHit and several subsequent methods—we adopt a hazard-based formulation by modeling discrete cause-specific hazards. This design choice is motivated by interpretability, flexibility for clinical data, empirical performance, and theoretical alignment with key principles of competing risks analysis.
+
+% A primary advantage of cause-specific hazards lies in their interpretability. 
+% The discrete hazard $\lambda_j(\tau_k; \bm{Z}_i)$ quantifies the instantaneous risk of experiencing event $j$ at time $\tau_k$, conditional on survival up to that point. 
+% This provides a dynamic and decomposable representation of risk over time, allowing investigators to trace how different causes contribute to overall event dynamics. 
+% In contrast, PMF-based models compress the full event-time distribution into single-event probabilities, obscuring the time-varying structure and complicating interpretation of covariate effects.
+
+% Hazard-based parameterizations are also naturally compatible with time-varying covariates. 
+% In many clinical applications, patient characteristics such as laboratory values, medications, and vital signs evolve over time. 
+% By modeling $\lambda_j(\tau_k; \bm{Z}_i)$ at each discrete interval, the model can directly incorporate such temporal updates, an ability that is difficult to represent consistently in PMF frameworks. 
+% Empirically, discrete-time logistic hazard models have shown superior calibration and discrimination compared to PMF-based approaches in survival prediction tasks~\citep{kvamme2021continuous}.
+
+% From a theoretical standpoint, the cause-specific hazards serve as the fundamental building blocks of the cumulative incidence functions (CIFs), which represent the cumulative probability that an individual will fail from a particular cause $j$ during the time interval $(0, t]$ in the presence of the other competing causes of failure~\citep{kalbfleisch2002statistical}. 
+% Each CIF$_j(t)$ depends not only on the hazard for cause $j$ but also on those of competing causes:
+% \begin{equation}
+%     F_j(\tau_k; \bm{Z}_i) =
+%     \sum_{l=1}^k 
+%     \lambda_{j}(\tau_l; \bm{Z}_i)
+%     \prod_{m=1}^{l - 1} \big(1 - \lambda(\tau_m; \bm{Z}_i)\big),
+%     \quad
+%     \lambda(\tau_m; \bm{Z}_i) = \sum_{r=1}^J \lambda_r(\tau_m; \bm{Z}_i).
+% \end{equation}
+% This relationship highlights that CIFs are derived quantities determined jointly by all hazards, rather than directly identifiable parameters. 
+% Consequently, modeling CIFs without reference to the underlying hazards risks incoherence or misinterpretation—for instance, a higher CIF for one cause may result from a lower competing hazard rather than an increased event propensity for that cause.
+
+% Finally, the hazard-level parameterization aligns naturally with the KL-based distillation framework proposed in this study. 
+% In discrete time, $\lambda_j(\tau_k; \bm{Z}_i)$ represents a locally normalized conditional probability, making the KL divergence well-defined across comparable time–cause cells. 
+% This enables efficient, stable, and interpretable transfer of information from external teacher models. 
+% Overall, hazard-based modeling combines the interpretability and theoretical rigor of classical survival analysis with the flexibility and predictive capacity of deep learning.
+
+
+
+
+
+
+%\section*{Accessibility}
+
+%Authors are kindly asked to make their submissions as accessible as possible for everyone including people with disabilities and sensory or neurological differences. Tips of how to achieve this and what to pay attention to will be provided on the conference website \url{http://icml.cc/}.
+
+% \section*{Software and Data}
+
+% If a paper is accepted, we strongly encourage the publication of software and data with the camera-ready version of the paper whenever appropriate. This can be done by including a URL in the camera-ready copy. However, \textbf{do not} include URLs that reveal your institution or identity in your submission for review. Instead, provide an anonymous URL or upload the material as ``Supplementary Material'' into the OpenReview reviewing system. Note that reviewers are not required to look at this material when writing their review.
+
+% Acknowledgements should only appear in the accepted version.
+%\section*{Acknowledgements}
+
+%\textbf{Do not} include acknowledgements in the initial version of the paper submitted for blind review.
+
+%If a paper is accepted, the final camera-ready version can (and usually should) include acknowledgements.  Such acknowledgements should be placed at the end of the section, in an unnumbered section that does not count towards the paper page limit. Typically, this will include thanks to reviewers who gave useful comments, to colleagues who contributed to the ideas, and to funding agencies and corporate sponsors that provided financial support.
+
+\section*{Impact Statement}
+This paper advances survival analysis and machine learning by developing methods for discrete-time competing risks that improve prediction and inference in data-limited, heterogeneous settings. Although motivated by organ transplantation, the approach applies broadly to time-to-event problems with multiple event types, such as oncology (cancer-related death vs other death), cardiovascular outcomes, and health services research. By enabling privacy-preserving transfer of predictive structure from external models without sharing individual-level data, and by providing mechanisms to mitigate negative transfer under outcome-definition mismatch, this work can help extend high-quality risk prediction to underrepresented cohorts and rare-event clinical settings where large, fully harmonized datasets are difficult to obtain.
+
+% In the unusual situation where you want a paper to appear in the
+% references without citing it in the main text, use \nocite
+\nocite{langley00}
+
+% \bibliography{example_paper}
+\bibliography{ref_enar}
+\bibliographystyle{icml2026}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% APPENDIX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\appendix
+\onecolumn
+
+
+
+\section{Proofs} \label{Proofs}
+
+% \subsection{Notation and basic identities}
+% \label{app:basic}
+% We summarize the proof-specific notation and identities in one place for ease of reference.
+% Definitions here are consistent with those in the main text and are included to keep the exposition self-contained.
+
+% For subject $i$ and interval $\tau_k$, define the categorical outcome
+% \[
+% Y_{ik}^{(0)} \equiv 1 - \sum_{j=1}^J \delta_{ik}^{(j)},\qquad
+% Y_{ik}^{(j)} \equiv \delta_{ik}^{(j)},~j=1,\ldots,J,
+% \]
+% with risk indicator $Y_{ik}=I(\min(D_i,C_i)\ge \tau_k)$.
+% Under the discrete-time competing risks model,
+% the conditional probabilities at $(i,k)$ are
+% \[
+% P_{\bm r}\big(Y_{ik}^{(j)}=1\mid Y_{ik}=1,\bm Z_i\big)=\lambda_j(\tau_k;\bm Z_i),
+% \quad j=1,\ldots,J,
+% \]
+% and
+% \[
+% P_{\bm r}\big(Y_{ik}^{(0)}=1\mid Y_{ik}=1,\bm Z_i\big)=1-\lambda(\tau_k;\bm Z_i),
+% \quad \lambda(\tau_k;\bm Z_i)=\sum_{j=1}^J\lambda_j(\tau_k;\bm Z_i).
+% \]
+
+% Recall the softmax parameterization
+% \[
+% \lambda_j(\tau_k;\bm Z_i)
+% =\frac{\exp\{r_j(\tau_k;\bm Z_i)\}}{1+\sum_{j'=1}^J\exp\{r_{j'}(\tau_k;\bm Z_i)\}},
+% \]
+% which implies the useful identities
+% \begin{align}
+% \log \lambda_j(\tau_k;\bm Z_i)
+% &=r_j(\tau_k;\bm Z_i)-\log\!\Bigl(1+\sum_{j'=1}^J e^{r_{j'}(\tau_k;\bm Z_i)}\Bigr),
+% \label{eq:log-lamj-id}\\
+% \log\{1-\lambda(\tau_k;\bm Z_i)\}
+% &=-\log\!\Bigl(1+\sum_{j'=1}^J e^{r_{j'}(\tau_k;\bm Z_i)}\Bigr).
+% \label{eq:log-surv-id}
+% \end{align}
+
+% Throughout, we use ``$\propto$'' to denote equality up to additive constants
+% that do not depend on $\bm r$ (and hence do not affect optimization).
+
+
+\subsection{Proof of Proposition~2.1}
+\label{app:proof-prop21}
+
+\begin{proof}
+Let $\mathcal S=\{(i,k):\,Y_{ik}=1\}$ be the set of at-risk subject--interval pairs and
+$N=\lvert \mathcal S\rvert=\sum_{i=1}^n\sum_{k=1}^K Y_{ik}$.
+At each $(i,k)\in\mathcal S$, define a $(J+1)$-category outcome
+$U_{ik}\in\{0,1,\ldots,J\}$, where $U_{ik}=j$ indicates an event of cause $j$ at $\tau_k$
+and $U_{ik}=0$ indicates ``no event'' at $\tau_k$.
+The model-implied conditional distribution at $(i,k)$ is
+\[
+p_{ik}^{(j)}(\bm r)
+:=P_{\bm r}(U_{ik}=j\mid Y_{ik}=1,\bm Z_i)=\lambda_j(\tau_k;\bm Z_i),\quad j=1,\ldots,J,
+\]
+and
+\[
+p_{ik}^{(0)}(\bm r)
+:=P_{\bm r}(U_{ik}=0\mid Y_{ik}=1,\bm Z_i)=1-\lambda(\tau_k;\bm Z_i),
+\quad \lambda(\tau_k;\bm Z_i)=\sum_{j=1}^J\lambda_j(\tau_k;\bm Z_i).
+\]
+Similarly, the empirical conditional distribution at $(i,k)$ is the one-hot vector
+$q_{ik}$ induced by the observed indicators:
+\[
+q_{ik}^{(j)}:=\delta_{ik}^{(j)},\quad j=1,\ldots,J,
+\quad
+q_{ik}^{(0)}:=1-\sum_{j=1}^J\delta_{ik}^{(j)}.
+\]
+
+We define the empirical KL divergence between the collection of empirical conditionals
+$\{q_{ik}\}_{(i,k)\in\mathcal S}$ and the model conditionals
+$\{p_{ik}(\bm r)\}_{(i,k)\in\mathcal S}$ as
+\begin{equation}
+D(P_n\parallel P_{\bm r})
+:=
+\sum_{(i,k)\in\mathcal S}
+\mathrm{KL}\!\left(q_{ik}\,\|\,p_{ik}(\bm r)\right)
+=
+\sum_{i=1}^n\sum_{k=1}^K Y_{ik}
+\sum_{c=0}^J q_{ik}^{(c)}
+\log\frac{q_{ik}^{(c)}}{p_{ik}^{(c)}(\bm r)}.
+\label{eq:empirical-kl}
+\end{equation}
+Because $q_{ik}$ is one-hot, $\sum_{c=0}^J q_{ik}^{(c)}\log q_{ik}^{(c)}=0$ (with the convention
+$0\log 0=0$), and hence
+\[
+\mathrm{KL}(q_{ik}\|p_{ik}(\bm r))
+=
+-\sum_{c=0}^J q_{ik}^{(c)}\log p_{ik}^{(c)}(\bm r).
+\]
+Substituting the definitions of $q_{ik}$ and $p_{ik}(\bm r)$ yields
+\begin{align}
+-D(P_n\parallel P_{\bm r})
+&=
+\sum_{i=1}^n\sum_{k=1}^K Y_{ik}
+\Bigg[
+\sum_{j=1}^J \delta_{ik}^{(j)}\log \lambda_j(\tau_k;\bm Z_i)
++
+\Bigl(1-\sum_{j=1}^J\delta_{ik}^{(j)}\Bigr)\log\{1-\lambda(\tau_k;\bm Z_i)\}
+\Bigg].
+\label{eq:ll-as-negkl}
+\end{align}
+The right-hand side is exactly the internal discrete-time competing risks log-likelihood
+expressed in the $(J+1)$-multinomial form. Therefore,
+\begin{equation}
+\ell(\bm r) = -D(P_n\parallel P_{\bm r}),
+\label{eq:ell-negkl}
+\end{equation}
+up to an irrelevant constant/scale depending on whether one uses the summed or averaged
+version of \eqref{eq:empirical-kl}.
+
+Next, by definition of KL divergence, the accumulated divergence to the teacher conditional
+distribution collection $\{\tilde p_{ik}\}$ satisfies
+\[
+\mathrm{D}(\tilde P\parallel P_{\bm r})
+=
+\sum_{(i,k)\in\mathcal S}\mathrm{KL}\!\left(\tilde p_{ik}\,\|\,p_{ik}(\bm r)\right)
+=
+-\sum_{(i,k)\in\mathcal S}\sum_{c=0}^J \tilde p_{ik}^{(c)}\log p_{ik}^{(c)}(\bm r)
++\mathrm{const},
+\]
+where $\mathrm{const}$ does not depend on $\bm r$.
+
+Combining the two displays, the penalized objective in \eqref{eq:penalized-loglik0} can be written as
+\[
+\ell_\eta(\bm r)
+=
+\ell(\bm r)-\eta\,\mathrm{D}(\tilde P\parallel P_{\bm r})
+\propto
+-\mathrm{D}(P_n\parallel P_{\bm r})
+-\eta\,\mathrm{D}(\tilde P\parallel P_{\bm r}).
+\]
+Multiplying by the positive constant $\frac{1}{1+\eta}$ does not change the optimizer. Let
+$\alpha=\eta/(1+\eta)$. Then maximizing $\ell_\eta(\bm r)$ is equivalent to minimizing
+\[
+(1-\alpha)\,\mathrm{D}(P_n\parallel P_{\bm r})
++\alpha\,\mathrm{D}(\tilde P\parallel P_{\bm r}),
+\]
+which proves the claim.
+\end{proof}
+
+
+
+\subsection{Proof of Proposition~\ref{prop2}}
+\label{app:proof-prop2}
+
+\begin{proof}
+Start from $\ell_\eta(\bm r)=\ell(\bm r)-\eta\,\mathrm{D}(\tilde P\parallel P_{\bm r})$.
+For each $(i,k)$ with $Y_{ik}=1$, the time-dependent KL divergence is
+\[
+d(\tilde P\parallel P_{\bm r};\bm Z_i,\tau_k)
+=
+\sum_{j=1}^J \tilde\lambda_j\log\frac{\tilde\lambda_j}{\lambda_j}
++(1-\tilde\lambda)\log\frac{1-\tilde\lambda}{1-\lambda},
+\]
+where we suppress $(\tau_k;\bm Z_i)$ in notation for brevity.
+
+Expanding and dropping terms independent of $\bm r$ yields
+\[
+-\eta\,d(\tilde P\parallel P_{\bm r};\bm Z_i,\tau_k)
+\propto
+\eta\left[
+\sum_{j=1}^J\tilde\lambda_j\log\lambda_j
++(1-\tilde\lambda)\log(1-\lambda)
+\right].
+\]
+Combining with the internal contribution at $(i,k)$,
+\[
+\ell(\bm r)
+=
+\sum_{i,k}Y_{ik}\left[
+\sum_{j=1}^J\delta_{ik}^{(j)}\log\lambda_j
++\Bigl(1-\sum_{j=1}^J\delta_{ik}^{(j)}\Bigr)\log(1-\lambda)
+\right],
+\]
+we obtain, up to additive constants,
+\begin{align*}
+\ell_\eta(\bm r)
+\propto
+\sum_{i,k}Y_{ik}\Bigg[
+\sum_{j=1}^J\{\delta_{ik}^{(j)}+\eta\tilde\lambda_j\}\log\lambda_j
++\Bigl\{1-\sum_{j=1}^J\delta_{ik}^{(j)}+\eta(1-\tilde\lambda)\Bigr\}\log(1-\lambda)
+\Bigg].
+\end{align*}
+Now substitute:
+\[
+\log\lambda_j = r_j - \log\Bigl(1+\sum_{j'}e^{r_{j'}}\Bigr),\qquad
+\log(1-\lambda)=-\log\Bigl(1+\sum_{j'}e^{r_{j'}}\Bigr).
+\]
+The coefficient in front of the shared term
+$-\log\bigl(1+\sum_{j'}e^{r_{j'}}\bigr)$ becomes
+\[
+\sum_{j=1}^J\{\delta_{ik}^{(j)}+\eta\tilde\lambda_j\}
++\Bigl\{1-\sum_{j=1}^J\delta_{ik}^{(j)}+\eta(1-\tilde\lambda)\Bigr\}
+=1+\eta.
+\]
+Therefore,
+\begin{align*}
+\ell_\eta(\bm r)
+\propto
+\sum_{i,k}Y_{ik}\Bigg[
+\sum_{j=1}^J\{\delta_{ik}^{(j)}+\eta\tilde\lambda_j\}\,r_j
+-(1+\eta)\log\!\Bigl(1+\sum_{j=1}^Je^{r_j}\Bigr)
+\Bigg].
+\end{align*}
+Dividing by $(1+\eta)$ (a positive constant) does not change the maximizer, yielding
+\[
+\ell_\eta(\bm r)
+\propto
+\sum_{i,k}Y_{ik}\Bigg[
+\sum_{j=1}^J\frac{\delta_{ik}^{(j)}+\eta\tilde\lambda_j}{1+\eta}\,r_j
+-\log\!\Bigl(1+\sum_{j=1}^Je^{r_j}\Bigr)
+\Bigg],
+\]
+which is exactly \eqref{log l kl competing}.
+\end{proof}
+
+
+\subsection{Proof of Proposition~\ref{prop3}}
+\label{app:overall2cr}
+
+%\begin{proposition}
+%\label{prop:overall2cr}
+%Let the external model provide only the overall discrete hazard $\tilde\lambda(\tau_k;\bm Z_i)$. Define the Bernoulli KL divergence at $(i,k)$ by
+%\[
+%d(\tilde P\parallel P_{\bm r};\tau_k,\bm Z_i)=\tilde\lambda\log\frac{\tilde\lambda}{\lambda}+(1-\tilde\lambda)\log\frac{1-\tilde\lambda}{1-\lambda}, \quad \lambda=\sum_{j=1}^J\lambda_j.
+%\]
+%Then the penalized objective $\ell_\eta(\bm r)=\ell(\bm r)-\eta\,\mathrm D(\tilde P\parallel P_{\bm r})$ is proportional to
+%\[
+%\sum_{i=1}^n\sum_{k=1}^K Y_{ik} \left[\sum_{j=1}^J\delta_{ik}^{(j)}r_j(\tau_k;\bm Z_i) +\eta\,\tilde\lambda(\tau_k;\bm Z_i)\log\!\Bigl(\sum_{j=1}^J e^{r_j(\tau_k;\bm Z_i)}\Bigr) -(1+\eta)\log\!\Bigl(1+\sum_{j=1}^Je^{r_j(\tau_k;\bm Z_i)}\Bigr)
+%\right].
+%\]
+%\end{proposition}
+
+\begin{proof}
+As in Appendix~\ref{app:proof-prop2}, expand the Bernoulli KL and drop terms
+independent of $\bm r$:
+\[
+-\eta\,d(\tilde P\parallel P_{\bm r})
+\propto
+\eta\left[\tilde\lambda\log\lambda+(1-\tilde\lambda)\log(1-\lambda)\right].
+\]
+Add the internal multinomial log-likelihood written in terms of $\log\lambda_j$ and $\log(1-\lambda)$.
+Using $\log\lambda=\log\{\sum_j\lambda_j\}$ and the softmax form,
+\[
+\lambda=\frac{\sum_{j=1}^Je^{r_j}}{1+\sum_{j=1}^Je^{r_j}}
+\quad\Rightarrow\quad
+\log\lambda=\log\!\Bigl(\sum_{j=1}^Je^{r_j}\Bigr)-\log\!\Bigl(1+\sum_{j=1}^Je^{r_j}\Bigr),
+\]
+and $\log(1-\lambda)=-\log\bigl(1+\sum_j e^{r_j}\bigr)$.
+Collecting terms yields the stated expression.
+\end{proof}
+
+\subsection{Proof of Proposition~\ref{prop4}}
+\label{app:specific2specific}
+
+\begin{proof}
+Without loss of generality, assume  that $J=2$. The likelihood function is given by
+% \begin{align*}
+%    L^*
+%    =&{} \prod_{i =1}^n \prod_{k=1}^{K} \left[\lambda_1(\tau_k;\textbf{Z}_{i})^{\delta_{ik}^{(1)}} \lambda_2(\tau_k;\textbf{Z}_{i})^{\delta_{ik}^{(2)}} \{1-\lambda_1(\tau_k; \textbf{Z}_{i})-\lambda_2(\tau_k; \textbf{Z}_{i})\}^{1-\delta_{ik}^{(1)}-\delta_{ik}^{(2)}} \right]^{Y_{ik}} \\
+%      =&{} \prod_{i =1}^n \prod_{k=1}^{K} \left[\lambda_1(\tau_k;\textbf{Z}_{i})^{\delta_{ik}{(1)}} 
+% \{1-\lambda_1(\tau_k;\textbf{Z}_{i})\}^{1-\delta_{ik}^{(1)}}\right]^{Y_{ik}} \times\\
+% &{} \prod_{i =1}^n \prod_{k=1}^{K} \left[\left\{\frac{\lambda_2(\tau_k;\textbf{Z}_{i})}{1-\lambda_1(\tau_k;\textbf{Z}_{i})}\right\}^{\delta_{ik}^{(2)}} \left\{1-\frac{\lambda_2(\tau_k;\textbf{Z}_{i})}{1-\lambda_1(\tau_k;\textbf{Z}_{i})}\right\}^{1-\delta_{ik}^{(1)}-\delta_{ik}^{(2)}} \right]^{Y_{ik}}.
+%  %\label{eq:loglkdgeneral2}  
+% \end{align*}
+\begin{align*}
+L^*
+&=
+\prod_{i=1}^n \prod_{k=1}^K
+\Bigl[
+\lambda_1(\tau_k;\bm Z_i)^{\delta_{ik}^{(1)}}
+\lambda_2(\tau_k;\bm Z_i)^{\delta_{ik}^{(2)}}
+\times
+\bigl\{1-\lambda_1(\tau_k;\bm Z_i)-\lambda_2(\tau_k;\bm Z_i)\bigr\}^{1-\delta_{ik}^{(1)}-\delta_{ik}^{(2)}}
+\Bigr]^{Y_{ik}}
+\\[0.4ex]
+&=
+\prod_{i=1}^n \prod_{k=1}^K
+\Bigl[
+\lambda_1(\tau_k;\bm Z_i)^{\delta_{ik}^{(1)}}
+\bigl\{1-\lambda_1(\tau_k;\bm Z_i)\bigr\}^{1-\delta_{ik}^{(1)}}
+\Bigr]^{Y_{ik}}
+\prod_{i=1}^n \prod_{k=1}^K
+\Biggl[
+\left\{\frac{\lambda_2(\tau_k;\bm Z_i)}{1-\lambda_1(\tau_k;\bm Z_i)}\right\}^{\delta_{ik}^{(2)}}
+\left\{1-\frac{\lambda_2(\tau_k;\bm Z_i)}{1-\lambda_1(\tau_k;\bm Z_i)}\right\}^{1-\delta_{ik}^{(1)}-\delta_{ik}^{(2)}}
+\Biggr]^{Y_{ik}}.
+\end{align*}
+Conditional the past event history, $\mathcal{H}_{ik} \coloneqq \{Y_{i1}, \cdots, Y_{ik},  \delta_{i1}^{(1)}, \cdots,  \delta_{ik-1}^{(1)}, \delta_{i1}^{(2)}, \cdots, \delta_{ik-1}^{(2)}, \bm Z_i\}$,
+$$ L_{ik}\coloneqq\left[\lambda_1(\tau_k;\bm Z_i)^{\delta_{ik}^{(1)}} 
+\{1-\lambda_1(\tau_k;\bm Z_i)\}^{1-\delta_{ik}^{(1)}}\right]^{Y_{ik}}$$
+can be viewed as a conditional density function for the primary event of interest $\delta_{ik}^{(1)}$ at time $\tau_k$, and 
+% \begin{align}
+%     \tilde L_{ik} \coloneqq
+%     \left[\left\{\frac{\lambda_2(\tau_k;\textbf{Z}_{i})}{1-\lambda_1(\tau_k;\textbf{Z}_{i})}\right\}^{\delta_{ik}^{(2)}}
+%     \left\{1-\frac{\lambda_2(\tau_k;\textbf{Z}_{i})}{1-\lambda_1(\tau_k;\textbf{Z}_{i})}\right\}^{1-\delta_{ik}^{(1)}-\delta_{ik}^{(2)}} \right]^{Y_{ik}}
+% \end{align}
+\begin{align*}
+    \tilde L_{ik}
+    \coloneqq\;
+    \Biggl[
+    &\left\{\frac{\lambda_2(\tau_k;\bm Z_i)}
+    {1-\lambda_1(\tau_k;\bm Z_i)}\right\}^{\delta_{ik}^{(2)}} 
+    \left\{1-\frac{\lambda_2(\tau_k;\bm Z_i)}
+    {1-\lambda_1(\tau_k;\bm Z_i)}\right\}^{1-\delta_{ik}^{(1)}-\delta_{ik}^{(2)}}
+    \Biggr]^{Y_{ik}}
+\end{align*}
+can be viewed as a conditional density function related to the nuisance competing event (i.e. other cause of death) conditioning on the primary event of interest at time $\tau_k$ and the past event history.
+This leads to the 
+composite conditional likelihood
+\begin{align}
+   L
+   & = 
+   \prod_{i =1}^n \prod_{k=1}^{K}  L_{ik} = 
+   \prod_{i =1}^n \prod_{k=1}^{K} \left[\lambda_1(\tau_k;\bm Z_i)^{\delta_{ik}^{(1)}} \{1-\lambda_1(\tau_k;\bm Z_i)\}^{1-\delta_{ik}^{(1)}}\right]^{Y_{ik}}, \nonumber
+% \label{eq:loglkdgeneral}  
+\end{align}
+ ignoring the nuisance partial likelihood $\tilde L=  \prod_{i =1}^n \prod_{k=1}^{K} \tilde L_{ik}$ without losing important information about the primary event of interest. The corresponding log-composite likelihood (up to constants) is
+\begin{equation}
+\ell(\bm r)
+=
+\sum_{i=1}^n\sum_{k=1}^K
+Y_{ik}\left[
+\delta_{ik}^{(1)}\log\lambda_1(\tau_k;\bm Z_i)
++\{1-\delta_{ik}^{(1)}\}\log\{1-\lambda_1(\tau_k;\bm Z_i)\}
+\right].
+\label{eq:collapsed-loglik}
+\end{equation} 
+\end{proof}
+
+%Note that the composite conditional likelihood $L$ in \eqref{eq:loglkdgeneral} is a product of conditional probabilities, which, as $\mathcal{H}_{ik}$ across times overlap, does not correspond to a single conditional distribution. However, since $L_{ik}$ is a density conditional on $\mathcal{H}_{ik}$, under the usual regularity conditions, we have $\mbox{E}\{U_{ik}| \mathcal{H}_{i}(t_{k})\}=0$. It follows that $$\mbox{E}(U_{ik})=\mbox{E}[\mbox{E}\{U_{ik}| \mathcal{H}_{i}(t_{k})\}]=0.$$ Furthermore, for $l <k$, $$\mbox{E}(U_{il}U_{ik}^\top)=\mbox{E}[\mbox{E}\{U_{il}U_{ik}^\top| \mathcal{H}_{i}(t_{k})\}]=\mbox{E}[U_{il}\mbox{E}\{U_{ik}^\top| \mathcal{H}_{i}(t_{k})\}]=0.$$ Thus, one might expect the classical results for likelihood asymptotics to apply, along with a central limit theorem.
+
+
+
+%External models trained under the same specification—where all non-primary events are censored—output corresponding discrete-time hazard predictions,\begin{equation*}\tilde{\lambda}_1(\tau_k;\bm{Z}_{i}) = \tilde{P}(D_i = \tau_k, \Delta_i = 1 \mid D_i \ge \tau_k, \bm{Z}_i),\end{equation*}which represent the external estimate of the instantaneous risk for the primary event at interval $\tau_k$.
+
+%This appendix provides the derivation underlying \ref{log l prior hazard}.
+
+%\paragraph{Step 1: Factorization and composite conditional likelihood.} For $J=2$ and primary event $j=1$, the full likelihood at $(i,k)$ factors as
+%\[
+%L^*_{ik}= \bigl[\lambda_1^{\delta_{ik}^{(1)}}\lambda_2^{\delta_{ik}^{(2)}}(1-\lambda_1-\lambda_2)^{1-\delta_{ik}^{(1)}-\delta_{ik}^{(2)}}\bigr]^{Y_{ik}} = L_{ik}\cdot \tilde L_{ik},
+%\]
+%where
+%\[
+%L_{ik}=\bigl[\lambda_1^{\delta_{ik}^{(1)}}(1-\lambda_1)^{1-\delta_{ik}^{(1)}}\bigr]^{Y_{ik}}
+%\]
+%is a Bernoulli likelihood for the primary event indicator $\delta_{ik}^{(1)}$ given being at risk at $\tau_k$, and $\tilde L_{ik}$ is a nuisance term involving $\lambda_2/(1-\lambda_1)$.
+
+%The collapsed ``one-vs-all'' approach targets only $\lambda_1$ via the composite conditional likelihood
+%\[
+%L=\prod_{i=1}^n\prod_{k=1}^K L_{ik} = \prod_{i=1}^n\prod_{k=1}^K \Bigl[\lambda_1(\tau_k;\bm Z_i)^{\delta_{ik}^{(1)}} \{1-\lambda_1(\tau_k;\bm Z_i)\}^{1-\delta_{ik}^{(1)}}\Bigr]^{Y_{ik}}.
+%\]
+
+\subsection{Proof of Proposition~\ref{prop5}}
+\label{app:prop5}
+
+\begin{proof}
+
+Let the teacher output $\tilde\lambda_1(\tau_k;\bm Z_i)$ for the same collapsed target.
+Define the Bernoulli KL at $(i,k)$:
+\[
+d(\tilde P\parallel P_{\bm r};\bm Z_i,\tau_k)
+=
+\tilde\lambda_1\log\frac{\tilde\lambda_1}{\lambda_1}
++(1-\tilde\lambda_1)\log\frac{1-\tilde\lambda_1}{1-\lambda_1}.
+\]
+Then
+\[
+-\eta\,d(\tilde P\parallel P_{\bm r})
+\propto
+\eta\left[\tilde\lambda_1\log\lambda_1+(1-\tilde\lambda_1)\log(1-\lambda_1)\right].
+\]
+Combining with \eqref{eq:collapsed-loglik} gives, up to constants,
+\begin{align}
+\ell_\eta(\bm r)
+&=
+\ell(\bm r)-\eta\sum_{i,k}Y_{ik}d(\tilde P\parallel P_{\bm r})
+\nonumber\\
+&\propto
+\sum_{i,k}Y_{ik}\Bigl[
+\{\delta_{ik}^{(1)}+\eta\tilde\lambda_1\}\log\lambda_1
++\{1-\delta_{ik}^{(1)}+\eta(1-\tilde\lambda_1)\}\log(1-\lambda_1)
+\Bigr].
+\label{eq:collapsed-penalized}
+\end{align}
+
+Rewrite \eqref{eq:collapsed-penalized} as
+\[
+\ell_\eta(\bm r)
+\propto
+\sum_{i,k}Y_{ik}\left[
+\frac{\delta_{ik}^{(1)}+\eta\tilde\lambda_1}{1+\eta}\log\frac{\lambda_1}{1-\lambda_1}
++\log(1-\lambda_1)
+\right],
+\]
+which matches \eqref{log l prior hazard} and shows that distillation
+replaces the hard label $\delta_{ik}^{(1)}$ by the pseudo-label
+\[
+\hat\delta_{ik}^{(1)}=\frac{\delta_{ik}^{(1)}+\eta\tilde\lambda_1(\tau_k;\bm Z_i)}{1+\eta}.
+\]
+Thus the objective is a standard discrete-time hazard (logit) likelihood
+with soft targets, enabling direct implementation in neural networks.
+\end{proof}
+
+
+\subsection{Theoretical Foundations}
+\label{app:prop6}
+
+We now provide theory in a low-dimensional discrete-time competing risks model to isolate the mechanism of negative transfer.  
+We show that, even under teacher–student heterogeneity, there exists a range of distillation weights $\eta$ for which the proposed KL estimator achieves smaller asymptotic mean squared error (aMSE)  than the internal-only maximum likelihood estimator (MLE).
+
+
+Consider the hazard function given by
+\begin{equation*}
+    \lambda_j(\tau_k;\boldsymbol{Z}_{i}) =g_j(\boldsymbol{Z}_{ik}^\top\boldsymbol{\theta})= \frac{\exp(\boldsymbol{Z}_{ik}^\top\boldsymbol{\theta}_j)}{1+\sum_{j^*=1}^J\exp(\boldsymbol{Z}_{ik}^\top\boldsymbol{\theta}_{j^*})},~j=1, \ldots, J,
+\end{equation*}
+ where
+$\boldsymbol{Z}_{ik}$ is the covariate for $i$-th subject at time $\tau_k$. Denote $\tilde{\lambda}_j(\tau_k;\boldsymbol{Z}_{i}) = g_j(\boldsymbol{Z}^\top_{ik} \tilde{\boldsymbol{\theta}})$ for the teacher model, where
+$\tilde{\boldsymbol{\theta}}$ is estimated parameters from the teacher training cohort. 
+Let $\boldsymbol{\theta}_0$ be the true value of the regression parameter $\boldsymbol{\theta}$ for the student cohort, and $\boldsymbol{\Delta}=\boldsymbol{\theta}_0-\tilde{\boldsymbol{\theta}}$.
+Denote $\eta_{ikj}=\boldsymbol{Z}^\top_{ik} \boldsymbol{\theta}_j$ and let $b(\eta_{ik})=\log\!\left(
+        1 + \sum_{j=1}^J
+        \exp(\boldsymbol{Z}^\top_{ik} \boldsymbol{\theta}_j)
+      \right)$.
+The corresponding penalized log-likelihood  function $\ell_{\eta}(\boldsymbol{\theta})$ is proportional to
+\begin{equation*}
+\frac{1}{n}\,\ell_{\eta}(\boldsymbol{\theta})
+= \frac{1}{n} \sum_{i=1}^n\sum_{k=1}^{K} Y_{ik} \left\{ 
+\sum_{j=1}^J
+    \delta_{ik}^{(j)}\eta_{ikj} - b(\eta_{ik}) \right\}
++ \frac{\eta}{n} \sum_{i=1}^n\sum_{k=1}^{K} Y_{ik}\left\{\sum_{j=1}^J\tilde\lambda_j(\tau_k;\boldsymbol{Z}_{i})\eta_{ikj} - b(\eta_{ik}) \right\}.
+\end{equation*}
+The corresponding generalized score function is
+\begin{eqnarray*}
+\boldsymbol{U}_\eta(\boldsymbol{\theta})
+=\frac{1}{n}\frac{\partial \ell_{\eta}(\boldsymbol{\theta})}{\partial \boldsymbol{\theta}}
+=\boldsymbol{U}(\boldsymbol{\theta})+\eta \widetilde{\boldsymbol{U}}(\boldsymbol{\theta}),
+\end{eqnarray*}
+where 
+\begin{equation*}
+\begin{aligned}
+\boldsymbol{U}(\boldsymbol{\theta})
+&= \frac{1}{n} \sum_{i=1}^n\sum_{k=1}^{K}  Y_{ik}\left\{ 
+\sum_{j=1}^J\delta_{ik}^{(j)} \frac{\partial \eta_{ikj}}{\partial \boldsymbol{\theta}}
+- \frac{\partial b(\eta_{ik})}{\partial \boldsymbol{\theta}}\right\}, \\
+\widetilde{\boldsymbol{U}}(\boldsymbol{\theta})
+&= \frac{1}{n} \sum_{i=1}^n\sum_{k=1}^{K} Y_{ik}\left\{ 
+\sum_{j=1}^J\tilde\lambda_j(\tau_k;\boldsymbol{Z}_{i}) \frac{\partial \eta_{ikj}}{\partial \boldsymbol{\theta}}
+- \frac{\partial b(\eta_{ik})}{\partial \boldsymbol{\theta}}\right\}.
+\end{aligned}
+\end{equation*}
+The generalized observed information matrix is
+\begin{eqnarray*}
+\boldsymbol{H}_\eta(\boldsymbol{\theta})=-\frac{\partial \boldsymbol{U}_\eta(\boldsymbol{\theta})}{\partial \boldsymbol{\theta}}
+= (1+ \eta)\boldsymbol{H}(\boldsymbol{\theta}),
+\end{eqnarray*}
+where
+\begin{equation*}
+\boldsymbol{H}(\boldsymbol{\theta})
+= \frac{1}{n} \sum_{i=1}^n\sum_{k=1}^{K} Y_{ik}
+\left[
+\frac{\partial^2 b(\eta_{ik})}{\partial \boldsymbol{\theta}\,\partial \boldsymbol{\theta}^\top}
+\right].
+\end{equation*}
+Let  $\hat{\boldsymbol{\theta}}(\eta)$ denote the solution to $\boldsymbol{U}_\eta(\boldsymbol{\theta})=\boldsymbol{0}$, and  $\hat{\boldsymbol{\theta}}$ denote the maximum likelihood estimator (MLE) of the internal model. 
+Denote $\boldsymbol{\theta}^{*}(\eta)$ as the unique maximum of the expected objective function $\mathbb{E}\{\ell_{\eta}(\boldsymbol{\theta})\}$. The derivation of asymptotic distributions follows closely with the discussion on the asymptotic likelihood theory of parametric models.
+To derive the asymptotic properties for the  estimator $\hat{\boldsymbol{\theta}}(\eta)$, 
+we impose the following conditions on the internal data and the teacher model:
+
+\begin{itemize}
+\item \textbf{Condition (A).} $\lim_{n \rightarrow \infty}n^{-1}\sum_{i=1}^{n}\sum_{k=1}^{K}Y
+_{ik}
+\{\sum_{j=1}^J g_j(\boldsymbol{Z}_{ik}^\top\boldsymbol{\theta})\eta_{ikj}-b(\eta_{ik})\}$ exists and is finite.
+
+\item \textbf{Condition (B).} For any $\boldsymbol{\theta}$ between $\boldsymbol{\theta}_{0}$ and $\tilde{\boldsymbol{\theta}}$, $\boldsymbol{h}(\boldsymbol{\theta})=\lim_{n \rightarrow \infty} \boldsymbol{H}(\boldsymbol{\theta})$ exists and is positive definite. Then, $\boldsymbol{h}_\eta(\boldsymbol{\theta})=\lim_{n \rightarrow \infty} \boldsymbol{H}_{\eta}(\boldsymbol{\theta})=(1+\eta)\boldsymbol{h}(\boldsymbol{\theta})$.
+\end{itemize}
+We first propose the following two lemmas showing the consistency and asymptotic distribution of $\hat{\boldsymbol{\theta}}(\eta)$ when $n \rightarrow \infty$. 
+
+\begin{lemma}\label{le1}
+If Condition (A)-(B) hold, for each $\eta\geq 0$, $\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}^*(\eta)=O_p(n^{-1/2})$.
+\end{lemma}
+
+\begin{lemma}\label{le2}
+If Condition (A)-(B) hold, and if $\eta = O(n^{-1/2})$, as $n \rightarrow \infty$,
+\begin{equation*}
+    n^{1/2} \{\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}^{*}(\eta) \} \overset{d}{\rightarrow} \mathcal{N}(\boldsymbol{0}, \boldsymbol{\Sigma}),
+\label{eq:lemma2-1}
+\end{equation*}
+where $\boldsymbol{\Sigma}\equiv\lim_{n\rightarrow \infty}\boldsymbol{H}_\eta^{-1}(\boldsymbol{\theta}_0) \boldsymbol{h}(\boldsymbol{\theta}_0)\boldsymbol{H}_\eta^{-1}(\boldsymbol{\theta}_0)
+$. If $\eta = o(n^{-1/2})$, as $n \rightarrow \infty$,
+\begin{equation*}
+    n^{1/2}\{\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}_0\}\overset{d}{\rightarrow} \mathcal{N}(\boldsymbol{0}, \boldsymbol{\Sigma}).
+\label{eq:lemma2-2}
+\end{equation*}
+\end{lemma}
+
+Lemma \ref{le1} shows that $\hat{\boldsymbol{\theta}}(\eta)$ is consistent for $\boldsymbol{\theta}^*(\eta)$, the unique maximum of $\mathbb{E}\{\ell_{\eta}(\boldsymbol{\theta})\}$, and it can be derived following the asymptotic likelihood theory of parametric models. Lemma \ref{le2} provides the asymptotic distribution of $\hat{\boldsymbol{\theta}}(\eta)$ when $n \rightarrow \infty$. Compared with the asymptotic distribution of the MLE $\hat{\boldsymbol{\theta}}$ of the internal model, the KL estimator $\hat{\boldsymbol{\theta}}(\eta)$ improves the estimation efficiency by borrowing teacher guidance with an appropriate $\eta$. In particular, when $\boldsymbol{\Delta}=0$, the KL estimator $\hat{\boldsymbol{\theta}}(\eta)$ is an unbiased estimator for $\boldsymbol{\theta}_0$; when internal and teacher populations are heterogeneous (e.g. $\boldsymbol{\Delta}\neq0$), $\hat{\boldsymbol{\theta}}(\eta)\overset{p}{\rightarrow}\boldsymbol{\theta}_0$ with $n \rightarrow \infty$ and $\eta = o(n^{-1/2})$. Lemma \ref{le1} is a standard result of MLE, and the proof of Lemma \ref{le1} is omitted here; the proof of Lemma \ref{le2} is presented below.
+
+\paragraph{Proof of Lemma~\ref{le2}}
+\begin{proof}
+By a Taylor's expansion of $\boldsymbol{0}=\boldsymbol{U}_{\eta}\{\hat{\boldsymbol{\theta}}(\eta)\}$ around $\boldsymbol{\theta}_0$, we have
+\begin{align*}
+\boldsymbol{0}
+&= \boldsymbol{U}_{\eta}(\boldsymbol{\theta}_0)
+   - \boldsymbol{H}_{\eta}(\boldsymbol{\theta}_0)\bigl\{\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}_0\bigr\}
+   + O_p\!\left(\left\Vert\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}_0\right\Vert_2^{\,2}\right) \\
+&= \boldsymbol{U}_{\eta}(\boldsymbol{\theta}_0)
+   - \boldsymbol{H}_{\eta}(\boldsymbol{\theta}_0)\bigl\{\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}_0\bigr\} \\
+&\quad + O_p\!\Bigl(
+      \left\Vert\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}^{\star}(\eta)\right\Vert_2^{\,2}
+    + \left\Vert\boldsymbol{\theta}^{\star}(\eta)-\boldsymbol{\theta}_0\right\Vert_2^{\,2}
+    + 2\left\Vert\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}^{\star}(\eta)\right\Vert_2
+      \left\Vert\boldsymbol{\theta}^{\star}(\eta)-\boldsymbol{\theta}_0\right\Vert_2
+   \Bigr),
+\end{align*}
+where $||\cdot||_2$ is the $\ell_2$ norm. Since $\boldsymbol{U}_{\eta}(\boldsymbol{\theta})$ is a continuous function, by mean value theorem, there exists a vector $\boldsymbol{c}_\eta$ between $\boldsymbol{\theta}_0$ and $\boldsymbol{\theta}^\star(\eta)$ such that
+\begin{equation*}
+    \boldsymbol{\theta}_0-\boldsymbol{\theta}^\star(\eta)=-\boldsymbol{H}_{\eta}^{-1}(\boldsymbol{c}_\eta)\{\boldsymbol{U}_{\eta}(\boldsymbol{\theta}_0)-\boldsymbol{U}_{\eta}(\boldsymbol{\theta}^\star(\eta))\}.
+\end{equation*}
+Since $\boldsymbol{\theta}^\star(\eta)$ is the unique solution to $\mathbb{E}_{\theta_0}\{\boldsymbol{U}_{\eta}(\boldsymbol{\theta}^\star(\eta))\}=\boldsymbol{0}$. Taking expectations, 
+\begin{equation*}
+    \boldsymbol{\theta}_0-\boldsymbol{\theta}^\star(\eta)=-\boldsymbol{H}_{\eta}^{-1}(\boldsymbol{c}_\eta)\mathbb{E}_{\theta_0}\{\boldsymbol{U}_{\eta}(\boldsymbol{\theta}_0)\}.
+\end{equation*}
+Note that $\boldsymbol{U}_\eta(\boldsymbol{\theta})=\boldsymbol{U}(\boldsymbol{\theta})+\eta \widetilde{\boldsymbol{U}}(\boldsymbol{\theta})$ and $\mathbb{E}_{\theta_0}\{\boldsymbol{U}(\boldsymbol{\theta}_0)\}=\boldsymbol{0}$. Then
+\begin{equation*}
+\mathbb{E}_{\theta_0}\!\left\{\boldsymbol{U}_{\eta}(\boldsymbol{\theta}_0)\right\}
+= \eta\, \mathbb{E}_{\theta_0}\!\left\{\widetilde{\boldsymbol{U}}(\boldsymbol{\theta}_0)\right\}
+= -\,\eta\, \boldsymbol{H}(\boldsymbol{c})\,\boldsymbol{\Delta}.
+\end{equation*}
+The last equation is by mean value theorem,  with $\boldsymbol{c}$ being a vector between $\boldsymbol{\theta}_0$ and $\tilde{\boldsymbol{\theta}}$. Then we have
+\begin{equation*}
+    \boldsymbol{\theta}_0-\boldsymbol{\theta}^\star(\eta)=\eta \boldsymbol{H}_{\eta}^{-1}(\boldsymbol{c}_\eta) \boldsymbol{H}(\boldsymbol{c}) \boldsymbol{\Delta}.
+\end{equation*}
+By condition (B), taking the limit as $n \rightarrow \infty$ on both sides gives
+\begin{equation*}
+\boldsymbol{\theta}_0-\boldsymbol{\theta}^\star(\eta)
+= \frac{\eta}{1+\eta}\,
+\boldsymbol{h}^{-1}\!\left(\boldsymbol{c}_\eta\right)\,
+\boldsymbol{H}(\boldsymbol{c})\,\boldsymbol{\Delta}.
+\end{equation*}
+If $\eta=O(n^{-1/2})$, then $\boldsymbol{\theta}_0-\boldsymbol{\theta}^\star(\eta)=O(n^{-1/2})$. With this rate and Lemma~\ref{le1},
+\begin{equation*}
+\boldsymbol{0}
+= \boldsymbol{U}_{\eta}(\boldsymbol{\theta}_0)
+- \boldsymbol{H}_{\eta}(\boldsymbol{\theta}_0)\bigl\{\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}_0\bigr\}
++ O_p(n^{-1}) + O(n^{-1}).
+\end{equation*}
+Rearranging gives 
+\begin{equation*}
+n^{1/2}\bigl\{\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}_0\bigr\}
+= \boldsymbol{H}_\eta^{-1}(\boldsymbol{\theta}_0)\,n^{1/2}\boldsymbol{U}_{\eta}(\boldsymbol{\theta}_0)
++ O_p(n^{-1/2}) + O(n^{-1/2}).
+\end{equation*}
+To derive the asymptotic property of $n^{1/2}\{\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}_0\}$, we examine the asymptotic behavior of $n^{1/2}\boldsymbol{U}_{\eta}(\boldsymbol{\theta}_0)$, where for subject $i$ at time $\tau$, we define
+\begin{equation*}
+U^{ikj}_\eta(\boldsymbol{\theta})
+= \delta_{ik}^{(j)} \frac{\partial \eta_{ikj}}{\partial \boldsymbol{\theta}}
+- \frac{\partial b(\eta_{ik})}{\partial \boldsymbol{\theta}}
++ \eta\left\{
+\tilde\lambda_j(\tau_k;\boldsymbol{Z}_{i}) \frac{\partial \eta_{ikj}}{\partial \boldsymbol{\theta}}
+- \frac{\partial b(\eta_{ik})}{\partial \boldsymbol{\theta}}
+\right\}.
+\end{equation*}
+then we have
+\begin{align*}
+\lim_{n\to\infty}\frac{1}{n}\sum_{i=1}^n\sum_{k=1}^{K}\sum_{j=1}^J
+Y_{ik}\,\mathbb{V}_{\theta_0}\!\left\{U^{ikj}_\eta(\boldsymbol{\theta})\right\}
+&= \lim_{n\to\infty}\frac{1}{n}\sum_{i=1}^n\sum_{k=1}^{K}\sum_{j=1}^J
+Y_{ik}\,\mathbb{V}_{\theta_0}\!\left[
+\delta_{ik}^{(j)} \frac{\partial \eta_{ikj}}{\partial \boldsymbol{\theta}}
+- \frac{\partial b(\eta_{ik})}{\partial \boldsymbol{\theta}}
+\right] \\
+&= \boldsymbol{h}(\boldsymbol{\theta}_0).
+\end{align*}
+Then we have
+\begin{eqnarray*}
+    n^{1/2} \{\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}^{*}(\eta) \} \overset{d}{\rightarrow} \mathcal{N}(\boldsymbol{0}, \boldsymbol{\Sigma}), 
+\end{eqnarray*}
+where $\boldsymbol{\Sigma}\equiv\lim_{n\rightarrow \infty}\boldsymbol{H}_\eta^{-1}(\boldsymbol{\theta}_0) \boldsymbol{h}(\boldsymbol{\theta}_0)\boldsymbol{H}_\eta^{-1}(\boldsymbol{\theta}_0)$. Moreover, when $\eta = o(n^{-1/2})$, as $n \rightarrow \infty$,
+\begin{equation*}
+    n^{1/2}\{\hat{\boldsymbol{\theta}}(\eta)-\boldsymbol{\theta}_0\}\overset{d}{\rightarrow} \mathcal{N}(\boldsymbol{0}, \boldsymbol{\Sigma}).
+\end{equation*}
+\end{proof}
+
+\begin{theorem}\label{th1}
+If conditions (A)-(B) hold, there exists a range $(0, \eta^*]$, on which the asymptotic mean squared error (aMSE) of $\hat{\boldsymbol{\theta}}(\eta)$ is strictly less than that of $\hat{\boldsymbol{\theta}}$. Moreover, when $\boldsymbol{\Delta}=\boldsymbol{0}$, the aMSE of $\widehat{\boldsymbol{\theta}}(\eta)$ is monotonically decreasing in $[0,\infty)$; when $\boldsymbol{\Delta}\neq\boldsymbol{0}$, the aMSE of $\widehat{\boldsymbol{\theta}}(\eta)$ is monotonically decreasing in $[0,\eta^*)$ and monotonically increasing in $[\eta^*, \infty)$, with
+\begin{equation*}
+    \eta^*=\frac{n^{-1}\operatorname{trace}\{\bm{h}^{-1}(\bm{\theta}_0)\}}{\bm{\Delta}^\top\bm{h}(\bm{c})^{\top}\bm{h}^{-2}(\bm{\theta}_0)\bm{h}(\bm{c})\bm{\Delta}}.
+\end{equation*}
+\end{theorem}
+
+Theorem \ref{th1} implies that the KL estimator improves the asymptotic mean squared error (aMSE) given an appropriate range of distillation weight $\eta$.  When $\boldsymbol{\Delta}=0$, $\widehat{\boldsymbol{\theta}}(\eta)$ is unbiased, and it is intuitive that $\mathrm{aMSE}\{\widehat{\boldsymbol{\theta}}(\eta)\} <\mathrm{aMSE}(\widehat{\boldsymbol{\theta}})$ for all $\eta>0$. Moreover, even if the teacher and internal information are heterogeneous, there exists a $\eta^{**}>\eta^{*}$ such that for $\eta \in (0, \eta^{**})$ the KL estimator $\widehat{\boldsymbol{\theta}}(\eta)$ achieves a smaller $\mathrm{aMSE}$  compared to the MLE estimator $\widehat{\boldsymbol{\theta}}$ using the internal data only. 
+
+\paragraph{Proof of Theorem A.3}
+\begin{proof}
+The asymptotic mean squared error (aMSE) of $\hat{\boldsymbol{\theta}}(\eta)$ is defined as
+\begin{align*}
+\mathrm{aMSE}\!\left\{\hat{\boldsymbol{\theta}}(\eta)\right\}
+&= \operatorname{trace}\!\left\{
+\boldsymbol{h}_\eta^{-2}(\boldsymbol{\theta}_0)\,\boldsymbol{h}(\boldsymbol{\theta}_0)
+\right\}
++ n\eta^2\,\boldsymbol{\Delta}^\top
+\boldsymbol{h}(\boldsymbol{c})^\top
+\boldsymbol{h}_\eta^{-2}(\boldsymbol{\theta}_0)
+\boldsymbol{h}(\boldsymbol{c})\,\boldsymbol{\Delta} \\
+&= \frac{1}{(1+\eta)^2}\operatorname{trace}\!\left\{
+\boldsymbol{h}^{-1}(\boldsymbol{\theta}_0)
+\right\}
++ \frac{n\eta^2}{(1+\eta)^2}\boldsymbol{\Delta}^\top
+\boldsymbol{h}(\boldsymbol{c})^\top
+\boldsymbol{h}^{-2}(\boldsymbol{\theta}_0)
+\boldsymbol{h}(\boldsymbol{c})\,\boldsymbol{\Delta}.
+\end{align*} 
+The aMSE can be rewritten as
+\begin{equation*}
+    \mathrm{aMSE}\{\hat{\boldsymbol{\theta}}(\eta)\}=v(\eta)+b(\eta),
+\end{equation*}
+where
+\begin{align*}
+v(\eta)
+&= \frac{1}{(1+\eta)^2}\operatorname{trace}\!\left\{\boldsymbol{h}^{-1}(\boldsymbol{\theta}_0)\right\}, \\
+b(\eta)
+&= \frac{n\eta^2}{(1+\eta)^2}\boldsymbol{\Delta}^\top
+\boldsymbol{h}(\boldsymbol{c})^\top
+\boldsymbol{h}^{-2}(\boldsymbol{\theta}_0)
+\boldsymbol{h}(\boldsymbol{c})\,\boldsymbol{\Delta}.
+\end{align*}
+Note that $v(\eta)$ is monotonically decreasing in $\eta$, $b(\eta)$ is monotonically increasing in $\eta$ with $b(0)=0$, and
+\begin{equation*}
+\mathrm{aMSE}\!\left\{\hat{\boldsymbol{\theta}}(0)\right\}
+= v(0)+b(0)
+= \operatorname{trace}\!\left\{\boldsymbol{h}^{-1}(\boldsymbol{\theta}_0)\right\}
+= \mathrm{aMSE}\!\left(\hat{\boldsymbol{\theta}}\right).
+\end{equation*}
+Then we consider the following two cases:
+
+\textbf{Case I:} When $\boldsymbol{\Delta}=\boldsymbol{0}$, we have $b(\eta)=0$ and $\mathrm{aMSE}\{\hat{\boldsymbol{\theta}}(\eta)\}=v(\eta)$ for all $\eta > 0$. Since $v(\eta)$ is monotonically decreasing in $\eta$, then for all $\eta > 0$, $v(\eta)< v(0)=\mathrm{aMSE}(\hat{\boldsymbol{\theta}})$. Thus for all $\eta>0$,
+$\mathrm{aMSE}\{\hat{\boldsymbol{\theta}}(\eta)\}<\mathrm{aMSE}(\hat{\boldsymbol{\theta}})$. 
+
+\textbf{Case II:}
+When $\boldsymbol{\Delta}\neq \boldsymbol{0}$, the first derivative of $\mathrm{aMSE}\{\hat{\boldsymbol{\theta}}(\eta)\}$ is given by
+\begin{equation*}
+\frac{\partial}{\partial \eta}\,\mathrm{aMSE}\!\left\{\hat{\boldsymbol{\theta}}(\eta)\right\}
+= \frac{2}{(1+\eta)^3}\left(
+n\eta\,\boldsymbol{\Delta}^\top \boldsymbol{h}(\boldsymbol{c})^\top
+\boldsymbol{h}^{-2}(\boldsymbol{\theta}_0)
+\boldsymbol{h}(\boldsymbol{c})\,\boldsymbol{\Delta}
+- \operatorname{trace}\!\left\{\boldsymbol{h}^{-1}(\boldsymbol{\theta}_0)\right\}
+\right).
+\end{equation*}
+and ${\partial \mathrm{aMSE}\{\widehat{\bm{\theta}}(\eta)\}}/{\partial \eta}=0$ at 
+$\eta^*$. 
+Moreover, we have ${\partial \mathrm{aMSE}\{\widehat{\bm{\theta}}(\eta)\}}/{\partial \eta}<0$ for all $\eta < \eta^*$, and ${\partial \mathrm{aMSE}\{\widehat{\bm{\theta}}(\eta)\}}/{\partial \eta}>0$ for all $\eta > \eta^*$. Then $\mathrm{aMSE}\{\widehat{\bm{\theta}}(\eta)\}$ is a monotonically decreasing function in $[0,\eta^*)$ and a monotonically increasing function in $[\eta^*, \infty)$. 
+Recall that when $\eta=0$, $\mathrm{aMSE}\{\widehat{\bm{\theta}}(0)\}=\mathrm{aMSE} (\widehat{\bm{\theta}})$. Thus, there exists a %$\eta^{**}=O(n^{-1/2})$ and 
+$\eta^{**}>\eta^{*}$, such that $\mathrm{aMSE}\{\widehat{\bm{\theta}}(\eta)\}<\mathrm{aMSE} (\widehat{\bm{\theta}})$ in the range of $(0,\eta^{**})$.
+\end{proof}
+
+
+\section{Evaluation Metrics}
+\label{A.Metrics}
+We evaluate model performance using both predictive accuracy and explanation-based interpretability. Specifically, we report $C^{td}$, IBS, IBLL, and the predictive deviance as primary metrics.
+To assess variable importance and model interpretability, we compute SHAP values and use the Jaccard index to quantify feature selection stability.
+
+\subsection{Time-dependent Concordance Index}
+The time-dependent concordance index ($C^{td}$) \citep{antolini2005time}, quantifies the model’s ability to rank survival probabilities in accordance with actual event times for a random
+pair of observations:
+\begin{equation}
+\begin{aligned}
+C^{td} 
+    & = P\left(\hat{S}(X_i|\bm{Z}_i) < \hat{S}(X_i|\bm{Z}_j) | X_i<X_j, \Delta_i=1 \right) \\ 
+    &\approx \frac{\sum_{i \neq j} \mathbbm{1}[X_i<X_j] \cdot \mathbbm{1}\left[\hat{S}(X_i|\bm{Z}_i) < \hat{S}(X_i|\bm{Z}_j)\right] \cdot \delta_i}{\sum_{i \neq j} \mathbbm{1}[X_i<X_j] \cdot \delta_i},
+\end{aligned}
+\end{equation}
+where $X_i = \min(D_i, C_i)$ is the observed time, $\hat{S}$ denotes predicted survival probabilities, and $\delta_i = \mathbbm{1}(\Delta_i=1)$.
+Note that the $C^{td}$ reduces to the standard concordance index ($C$-index) \citep{harrell1982evaluating} when the proportional hazards assumption holds.
+
+In the competing risks scenario, we follow the extended definition of the $C^{td}$ for risk $k$ as described by \cite{lee2018deephit}:
+\begin{equation}
+\begin{aligned}
+C^{td}_k 
+    & = P\left(\hat{F}_k(X_i|\bm{Z}_i) > \hat{F}_k(X_i|\bm{Z}_j) | X_i<X_j, \Delta_i=k \right) \\ 
+    &\approx \frac{\sum_{i \neq j} A_{k,i,j} \cdot \mathbbm{1}\left[\hat{F}_k(X_i|\bm{Z}_i) > \hat{F}_k(X_i|\bm{Z}_j)\right]}{\sum_{i \neq j} A_{k,i,j}},
+\end{aligned}
+\end{equation}
+where $\hat{F}_k$ denotes predicted cumulative incidence function for risk $k$ and
+\begin{equation}
+    A_{k,i,j} = \mathbbm{1}(\Delta_i=k, X_i<X_j)
+\end{equation}
+capturing pairs where one individual experiences event $k$ while the other individual remains at risk without having experienced the event. 
+A higher $C^{td}$ indicates better discrimination.
+% is the indicator function for a pair $(i,j)$ to be acceptable for an event k and the approximation comes from the empirical definition. Thus, the $C^{td}$-index for risk $k$ is derived from comparison of pairs in which one patient has experienced event $k$ at a particular time while the other has not experienced any event nor been censored by that time. 
+
+
+\subsection{Integrated Brier Score (IBS)}
+The Integrated Brier Score (IBS) evaluates the global calibration and accuracy of time-dependent survival predictions under right censoring. 
+Following the IPCW (inverse probability of censoring weighted) formulation from \citet{gerds2006consistent, graf1999assessment, kvamme2019time}, 
+the Brier score at time $t$ is defined as
+\begin{equation}
+\text{BS}(t)
+= \frac{1}{n} \sum_{i=1}^n 
+W_i(t)\left( \hat{S}(t \mid \bm{Z}_i) - \mathbbm{1}(X_i > t) \right)^2,
+\end{equation}
+where $\hat{S}(t \mid \bm{Z}_i)$ denotes the predicted survival probability and $W_i(t)$ represents the IPCW weight constructed from the Kaplan--Meier estimator of the censoring distribution.
+This weighting corrects for informative loss of individuals due to censoring and yields an unbiased estimate of prediction error.
+
+The IBS aggregates the Brier score over the full time interval:
+\begin{equation}
+    \mathrm{IBS} = \frac{1}{t_{\max} - t_{\min}}
+    \int_{t_{\min}}^{t_{\max}} \mathrm{BS}(t)\, dt,
+\end{equation}
+which is approximated via numerical integration.  A lower IBS indicates better calibration and discrimination of survival predictions across time.
+
+\subsection{Integrated Binomial Log-Likelihood (IBLL)}
+Another metric evaluating both calibration and discriminative performance is the Integrated Binomial Log-Likelihood (IBLL), based on the IPCW-weighted binomial log-likelihood introduced by \citet{graf1999assessment, kvamme2019time}.  
+Let $\hat{S}(t \mid \bm{Z}_i)$ denote the predicted survival probability at time $t$ and $\hat{G}(t)$ the Kaplan--Meier estimator of the censoring distribution.  
+The IPCW binomial log-likelihood at time $t$ is
+\begin{equation}
+\label{eq:bll}
+\mathrm{BLL}(t)
+= \frac{1}{n} \sum_{i=1}^n 
+\left[
+    \frac{\log\!\left( 1 - \hat{S}(t \mid \bm{Z}_i) \right)\,
+        \mathbbm{1}(X_i \le t,\, \Delta_i = 1)}{\hat{G}(X_i)}
+    +
+    \frac{\log\!\left( \hat{S}(t \mid \bm{Z}_i) \right)\,
+        \mathbbm{1}(X_i > t)}{\hat{G}(t)}
+\right].
+\end{equation}
+
+Analogous to the IBS, the IBLL summarizes the binomial log-likelihood over the full time interval:
+\begin{equation}
+\label{eq:IBLL}
+\mathrm{IBLL}
+= \frac{1}{t_{\max} - t_{\min}}
+\int_{t_{\min}}^{t_{\max}} \mathrm{BLL}(t)\, dt.
+\end{equation}
+
+Compared with the squared-error penalty used by the Brier score, the binomial log-likelihood penalizes prediction errors on the scale $-\log(1-x)$, which imposes stronger penalties for large deviations in predicted survival probabilities.  
+Therefore, a lower IBLL indicates better calibration and improved likelihood fit of the predicted discrete-time survival distributions.
+
+\subsection{Predictive Deviance}
+Another metric is the predictive deviance \citep{burnham1998practical, tutz2016modeling}, defined as the negative log-likelihood of the fitted model on the test data, reflecting the discrepancy between the learned and the true data-generating processes.
+
+
+\subsection{SHAP}
+SHAP (SHapley Additive exPlanations) is a widely adopted technique in Explainable Artificial Intelligence (XAI) that attributes the prediction of a model to its input features based on cooperative game theory. It approximates Shapley values---a principled way of distributing a model’s output among its input features based on their marginal contributions~\cite{lundberg2017unified, vo2024explainability}. Formally, for a predictive model $v$ that outputs $v(\bm{Z}_i)$ for an input $\bm{Z}_i = (Z_{i1}, Z_{i2}, \dots, Z_{ip})$, the Shapley value $\phi_j$ corresponding to the $j$th feature is defined as
+% One prominent approach in Explainable Artificial Intelligence (XAI) is SHAP, which leverages Shapley values to fairly distribute the contribution of each feature to the prediction.
+% SHAP approximate Shapley values, a widely used approach from cooperative game theory that come with desirable properties \cite{lundberg2017unified, vo2024explainability}. The core idea behind Shapley value based explanations of machine learning models is to use fair allocation results from cooperative game theory to allocate credit for a model’s output among its input features.
+% Consider a machine learning or deep learning model $v$ that takes an input vector $\bm{Z}_i = (Z_{i1}, Z_{i2}, \dots, Z_{ip})$ and produces a prediction $v(\bm{Z}_i)$. Let $P = \{1, 2, \dots, p\}$ be the complete index set of features and $S$ a coalition of feature indices (a subset of $P \setminus \{j\}$). For $j = 1, 2, \dots, p$, the SHAP value $\phi_j$ for the feature value $Z_{ij}$ is defined as
+\begin{equation}
+    \phi_j = \sum_{S \subseteq P \setminus \{j\}} \frac{|S|! (p - |S| - 1)!}{p!} \left[ v(S \cup \{j\}) - v(S) \right],
+\end{equation}
+where $P = \{1, 2, \dots, p\}$ denotes the index set of features, and $S$ is a subset of $P$ that excludes $j$. The expression quantifies the expected marginal improvement in the prediction by including feature $j$ over all possible feature coalitions. These values offer consistent and model-agnostic explanations, making them particularly suitable for interpreting complex models like deep neural networks.
+
+In practice, we compute the mean absolute SHAP value for each feature across all individuals and rank the features by their average importance. The top $d$ features in this ranking are designated as the most important variables ~\cite{marcilio2020explanations}. This allows us to capture not just which features contribute most on average, but also to compare how different models prioritize variables under varying data configurations.
+
+\subsection{Jaccard Index}
+Model training and data splitting introduce randomness that may affect the stability of variable selection. To address this, we quantify the agreement in selected important features across repeated runs using the Jaccard index. Given two feature sets $A$ and $B$ (e.g. top-20 SHAP-ranked variables from two replicates), the Jaccard index is defined as
+\begin{equation}
+    \text{Jaccard}(A, B) = \frac{|A \cap B|}{|A \cup B|},
+\end{equation}
+which ranges from 0 (no overlap) to 1 (complete overlap). A higher Jaccard index implies that the model consistently identifies similar sets of influential variables across different random seeds or data partitions, thus enhancing the credibility of feature-based explanations.
+
+
+
+
+\section{Additional Experiment Settings}
+\subsection{Additional Implementation Details}
+\label{A.ImpleDetails}
+\paragraph{Implementation.}
+We implemented DiSKD in Python~3.9 with PyTorch~1.12.1.
+Each experiment follows a two-stage pipeline: we first train a teacher model on the external dataset, and then train a student model on the internal dataset with a KL-regularized objective that distills the teacher predictions.
+To ensure comparability, we use the same training, validation, and tuning protocol across all experiments.
+Unless otherwise noted, we use a Transformer-based discrete-time survival network as the default architecture.
+All training runs last for at most 128 epochs with early stopping: training stops if the validation loss does not improve for 5 consecutive epochs, where an epoch denotes one full pass over the training data.
+
+\paragraph{Tuning parameters.} We tune architectural and optimization hyperparameters by 5-fold cross-validation using validation predictive deviance.
+The search space includes the number of layers $\{1,2,3,4\}$, hidden units per layer $\{32,64,128\}$, and dropout rate $\left[0.1,0.2\right]$, together with batch size $\{32,64,128\}$ and learning rate $\left[5\times10^{-4},10^{-3}\right]$.
+Batch normalization is enabled in all runs.
+We also tune the distillation temperature $T$ over $(0,5)$ and the distillation weight $\eta$ over $\left[0,10\right]$.
+
+We use \texttt{Optuna} for automated hyperparameter optimization \citep{optuna_2019}, with the Tree-structured Parzen Estimator (TPE) sampler \citep{bergstra2011algorithms, bergstra2013making, watanabe2023tree}.
+TPE maintains separate density models for high-performing and low-performing configurations from previous trials and proposes new candidates that maximize the expected improvement of the validation objective.
+Compared with manual grid search, this Bayesian optimization procedure avoids rigid discretization and can treat $\eta$ as a continuous parameter, which is particularly useful in small-sample settings where coarse grids may yield unstable or sub-optimal choices.
+We run 20 trials per optimization run and select the configuration with the lowest validation predictive deviance, balancing search thoroughness with computational cost.
+
+% Unlike standard grid-based tuning (which requires the user to pre-specify a discrete and potentially coarse set of candidate values and may miss good solutions if the grid is poorly chosen), the TPE sampler in \texttt{Optuna} can treat $\eta$ as a continuous parameter and search it adaptively.
+% By explicitly modeling how $\eta$ relates to the validation loss based on outcomes from previous trials, the algorithm allocates more evaluations to promising regions of the $\eta$ space, rather than spreading computation uniformly across an arbitrary grid.
+% This targeted exploration helps mitigate the instability and extra variance that can arise from discrete grid selection in small-sample settings.
+% We run 20 trials per optimization run and select the configuration that minimizes the validation loss, balancing search thoroughness with computational cost.
+
+Because the optimal $\eta$ depends on the relative informativeness of the teacher predictions versus the internal data, there is no single fixed default that is universally appropriate.
+\texttt{Optuna} addresses this by letting us specify a wide initial search range for $\eta$ rather than committing to a hand-crafted grid or a single recommended value.
+This removes the burden of choosing grid resolution and coverage: practitioners can initialize the tuning pipeline with a broad range, and the Bayesian optimizer will adaptively concentrate its search and converge to an appropriate weighting for the dataset at hand.
+
+For the teacher, we split the external dataset into training and validation subsets, perform TPE-based 5-fold cross-validation to select hyperparameters, and then refit the final teacher under the selected configuration.
+For the student, we considered two strategies: (i) jointly tuning network hyperparameters together with $(T,\eta)$ in a single cross-validation loop, and (ii) first tuning the network hyperparameters and then selecting $(T,\eta)$ in an additional cross-validation step.
+Both strategies produced comparable performance in preliminary experiments; we adopt the sequential strategy due to its lower computational cost.
+
+
+\subsection{Simulation Settings}
+\label{A.SimSettings}
+
+\paragraph{Data-generating process.}
+We consider a competing-risks setting with two correlated causes. We generate 12 independent covariates $\bm{X}=(X_1,\ldots,X_{12})^\top$ with $X_p\sim\mathcal{N}(0,1)$ and define three linear summaries
+$Z_1=\sum_{p=1}^4 X_p$, $Z_2=\sum_{p=5}^8 X_p$, and $Z_3=\sum_{p=9}^{12} X_p$.
+Latent failure times are sampled from exponential distributions whose rate parameters depend nonlinearly on $(Z_1,Z_2,Z_3)$:
+\begin{align*}
+    &D_1 \sim \mathit{Exp}\left\{ (\beta_1 Z_1)^2 + (\beta_3 Z_3)^2 \right\}, \\
+    &D_2 \sim \mathit{Exp}\left\{ (\beta_2 Z_2)^2 + (\beta_3 Z_3)^2 \right\}. 
+\end{align*}
+Here, $X_1$ to $X_4$ are associated only with risk 1, $X_5$ to $X_8$ only with risk 2, while $X_9$ to $X_{12}$ influence both. Independent censoring times were sampled from a uniform distribution $C \sim \mathcal{U}(0, 500)$. The failure time and event indicators were constructed as
+\begin{align*}
+&D = \min\{D_1, D_2\},\\
+&\Delta = 
+\begin{cases}
+    \arg\min\{D_1, D_2\} & \text{if } D < C, \\
+    0 & \text{otherwise}.
+\end{cases}
+\end{align*}
+Observed times were discretized into 20 intervals using Kaplan–Meier quantiles. With parameters $\beta_1=2$, $\beta_2=2$, and $\beta_3=8$, this setup produced event rates of approximately $29.76\%$ for risk~1 and $29.36\%$ for risk~2.
+
+In this design, the two competing risks are highly correlated. 
+This arises because both cause-specific failure times share the same  dominant nonlinear term $(\beta_3 Z_3)^2$ in their rate functions.
+Although $Z_1$ and $Z_2$ uniquely affect risks~1 and~2, respectively, the magnitude of $(\beta_3 Z_3)^2$ is much larger when $\beta_3$ is set to a large value, and therefore this shared component explains the majority of the variation in the event times for both causes. 
+As a result, individuals with large values of $Z_3$ simultaneously experience similar shifts in the risk levels of both causes. 
+Consequently, the two cause-specific hazards tend to move in parallel, leading to strong dependence between the two competing risks.
+
+We generate a teacher-training dataset ($n=10{,}000$), an internal student-training dataset ($n=500$), and an independent test dataset ($n=5{,}000$) from the same distribution.
+All experiments are repeated over 20 random seeds.
+
+
+\paragraph{Methods compared.}
+We compare an internal-only baseline with two DiSKD variants that differ in the form of teacher information:
+% \begin{enumerate}[1.]
+    (1) Internal: a competing-risks student trained on the internal dataset using all covariates, without distillation;
+    (2) DiSKD-C: distillation from a competing-risks teacher that provides cause-specific discrete-time hazard predictions for each risk;
+    (3) DiSKD-O: distillation from an overall-event teacher that provides only the aggregated hazard for the composite event.
+    % \item DiSKD-B: A variation of DiSKD where the external model only provides binary predictions, i.e. the probability that the event with 1st risk occurs before the final time $\tau_K$. This binary external model here was implemented with a CatBoost classifier.
+% \end{enumerate}
+%All DiSKD methods share the same KL-based penalized likelihood formulation, differing only in the type of external predictions used. 
+To vary teacher quality, we restrict the covariates available to the teacher while keeping the student covariates fixed.
+We consider three teacher configurations:
+% \begin{enumerate}[(a)]
+    (a) Good-quality teacher: used the full covariate set;
+    (b) Fair-quality teacher: used a subset of covariates $\{X_1, X_2, X_3, X_5, X_6, X_7, X_9, X_{10}, X_{11}\}$;
+    (c) Poor-quality teacher: used a smaller subset $\{X_1, X_2, X_5, X_6, X_9, X_{10}\}$.
+    % \item Poor-quality model (h3): External model included minimal covariates: $\{X_1, X_5, X_9\}$.
+% \end{enumerate}
+
+
+\subsection{Benchmark Survival Data Settings}
+\label{A.BenchmarkSettings}
+
+\subsubsection{SUPPORT}
+The Study to Understand Prognoses Preferences Outcomes
+and Risks of Treatment (SUPPORT) is a large-scale study examining survival outcomes among seriously ill hospitalized patients \citep{knaus1995support}. Approximately 68.1\% of participants died during the study, with a median survival time of 58 days. The original dataset includes 9,105 patients and 14 covariates. Due to varying admission criteria and screening procedures, individuals entered the study at different time points.
+
+The covariates comprise demographic characteristics (age, sex, race) and clinical measurements recorded on the third day of the study (or the first day if third-day data were unavailable). These include the number of comorbidities, and the presence of diabetes, dementia, and cancer, along with physiological measures such as mean arterial blood pressure, heart rate, respiratory rate, temperature, white blood cell count, serum sodium, and serum creatinine. Patients who died before the third study day were excluded, ensuring nearly complete data for the remaining participants. After excluding records with missing values, 8,873 patients were retained for analysis.
+
+For our experiments, we used the pre-processed version of the dataset provided by \citep{katzman2018deepsurv}. 
+% To avoid left truncation, we subtracted 2 from all time values (since no patient had an observed time below 2). 
+We further assumed a maximum follow-up period of 180 days, treating patients surviving beyond this period as censored, which resulted in a censoring rate of 53\%. The follow-up period was divided into 20 evenly spaced intervals, and each patient's event time was assigned to a corresponding interval. Alternatively, interval boundaries can be defined using quantiles of the Kaplan-Meier estimator. This preprocessing step prepares the data for modeling using discrete-time survival methods, which are particularly suitable for short follow-up periods and densely spaced time points. 
+
+\subsubsection{METABRIC}
+The Molecular Taxonomy of Breast Cancer International Consortium (METABRIC) dataset is a widely used breast cancer survival benchmark that combines molecular profiles with clinical features to study disease subtypes and prognosis \citep{curtis2012genomic}.
+It contains gene expression measurements and clinical variables for 1{,}980 patients, among whom 57.72\% have an observed death due to breast cancer, with a median survival time of 116 months.
+Following standard preprocessing used in prior work, we construct covariates in line with the Immunohistochemical 4 plus Clinical (IHC4+C) setting by combining four gene indicators (MKI67, EGFR, PGR, and ERBB2) with clinical features, including treatment indicators (hormone therapy, radiotherapy, and chemotherapy), ER status, and age at diagnosis.
+In our experiments, we discretize follow-up time into 20 intervals.
+
+
+
+\subsubsection{GBSG}
+We use the combined Rotterdam tumor bank and German Breast Cancer Study Group (Rot.\ \& GBSG) benchmark, which contains $n=2{,}232$ patients with no missing values \citep{foekens2000urokinase, schumacher1994randomized}.
+In total, 965 (43.23\%) individuals are right-censored.
+Each patient has 7 covariates, including hormone therapy, age, menopausal status, tumor grade, number of positive nodes, progesterone receptor, and estrogen receptor.
+In our experiments, we discretize follow-up time into 20 intervals.
+
+
+
+
+\subsection{SRTR Model Updating Settings}
+\label{A.SRTRSettings}
+This study used data from the Scientific Registry of Transplant Recipients (SRTR). The SRTR data system includes data on all donor, wait-listed candidates, and transplant recipients in the US, submitted by the members of the Organ Procurement and Transplantation Network (OPTN). The Health Resources and Services Administration (HRSA), U.S. Department of Health and Human Services provides oversight to the activities of the OPTN and SRTR contractors. We analyzed one-year risks of death and graft failure among adult kidney transplant recipients.
+
+\paragraph{Cohort construction and eras.}
+To separate the effects of overlapping clinical and policy changes, we divided the data into two distinct eras: the COVID period (March~1,~2020–May~11,~2023; $n=52{,}436$) and the post-COVID period (May~11–September~1,~2023; $n=5{,}041$).
+The earlier period spans both the COVID-19 pandemic and the national rollout of the KAS250 allocation policy, during which transplant volumes, donor characteristics, and recipient outcomes underwent major structural shifts.
+In contrast, the post-COVID period represents a stabilized phase of the U.S. transplant system under the full implementation of KAS250, providing the most relevant window for evaluating post-policy outcomes and for developing models aligned with current practice.
+
+\paragraph{Follow-up and evaluation window.}
+The SRTR registry is released through periodic snapshots that add new transplants and may revise historical records.
+Because our evaluation targets one-year outcomes, we restrict the internal cohort to the most recent three months of transplants (May--September~2023) for which complete one-year follow-up was available at the time of analysis.
+
+% From a data perspective, the SRTR registry is continuously updated through monthly snapshots that incorporate new transplants and historical revisions.
+% Because complete one-year follow-up is required for survival evaluation, we analyzed the most recent three months of transplants (May–September~2023) for which one-year outcomes were fully observable at the time of analysis.
+
+\paragraph{Teacher--student updating protocol.}
+We treat the post-COVID cohort as the internal target population and the COVID+KAS250 cohort as a large but distributionally shifted historical source.
+Crucially, in many registry workflows the transferable artifact is a previously developed model (or its predictions), rather than sharable individual-level data.
+To reflect this deployment reality, we train a teacher model on the COVID+KAS250 cohort and use its discrete-time cause-specific hazard predictions as the supervision signal for DiSKD when fitting a student on the post-COVID cohort.
+This protocol operationalizes model updating under real temporal and policy shifts while avoiding any requirement to pool individual-level data across eras.
+
+% We treated the post-COVID cohort as the internal target population, representing the contemporary clinical regime, and the COVID+KAS250 cohort as the  external source, representing a large but distributionally shifted historical population.  
+
+% In many registry settings, external information is available as a previously developed model (or its predictions), rather than individual-level external data or parameters from a matched architecture.
+% Accordingly, we independently trained an external model on the COVID+KAS250 cohort to generate discrete-time cause-specific hazard predictions, which served as teacher outputs for DiSKD. 
+% This design enables knowledge transfer from historical to contemporary cohorts without access to external individual-level data, matching a realistic continual-learning scenario in which models must be refreshed under policy and population changes.
+
+% \subsubsection{Evaluation Protocol and Competing Methods.}
+% \label{A.SRTREval}
+
+
+
+
+\subsection{SRTR Donor Risk Prediction Settings}
+\label{A.SRTRSettings2}
+\paragraph{Teacher--student setup.}
+We treat as the teacher a DiSKD-updated Transformer-based discrete-time competing-risks model trained to predict one-year death and graft failure in the post-COVID cohort (Section~\ref{SRTR1}).
+The teacher leverages the full donor, recipient, and transplant-center covariate set and is updated using guidance learned from the COVID-era cohort, producing cause-specific hazard sequences for both endpoints.
+We then distill these predictions into a donor-only student, implemented as a lightweight two-layer Transformer with 32 hidden dimensions.
+This design reflects a deployment constraint: the student is restricted to donor information available at organ offer, while the teacher captures richer clinical context.
+
+
+\paragraph{Donor-only input configurations.}
+To connect with realistic implementation targets, we evaluate two donor feature sets.
+In a maximal-donor setting, the student uses all donor-related variables available in SRTR, representing the strongest donor-only predictor when a comprehensive donor record can be accessed at scoring time.
+In a KDRI-compatible setting, the student is restricted to the eight donor factors used by the Kidney Donor Risk Index (KDRI): donor age, height, weight, hypertension, diabetes, cause of death (CVA vs.\ other), terminal creatinine, and DCD status.
+This restricted setting is operationally important because KDRI is the standard donor-only interface used in U.S.\ kidney allocation; improvements achieved without changing required inputs are more readily translatable than proposals that require additional variables.
+Accordingly, we include KDRI as a donor-only benchmark.
+
+
+\paragraph{Baselines and evaluation.}
+To isolate the value of distillation, we compare the distilled donor-only student against (i) an internal donor-only model with the same architecture trained directly on the post-COVID cohort without teacher guidance and (ii) KDRI.
+All models are trained and evaluated using 5-fold cross-validation repeated 10 times.
+
+
+
+
+
+\section{Additional Experiment Analysis}
+
+\subsection{Simulation}
+
+\subsubsection{Effect of Distillation Weight $\eta$}
+\label{A.Sim.Eta}
+The distillation weight $\eta$ controls the strength of KL guidance relative to the student likelihood and is therefore a key practical tuning parameter in DiSKD.
+With an informative teacher, increasing $\eta$ can amplify useful guidance and improve generalization in small internal cohorts.
+With a weak or misspecified teacher, excessively large $\eta$ can over-emphasize unreliable guidance and lead to degraded performance.
+We therefore sweep $\eta$ to assess sensitivity and to understand how the preferred distillation strength varies with teacher quality (as induced by covariate restriction).
+
+
+Figure~\ref{fig_compet_1:etaplot} summarizes performance as a function of $\eta$.
+When the teacher is strong, DiSKD-C achieves the best results across a wide range of $\eta$ in both $C^{td}$ and predictive deviance, indicating stable gains from distilling cause-specific hazards.
+As teacher quality degrades, the advantage of DiSKD-C over DiSKD-O shrinks and the curves converge, suggesting that when teacher information is limited, distilling the aggregated hazard captures most of the transferable signal and additional cause-specific structure yields smaller marginal benefit.
+
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}{0.8\columnwidth}
+   \centering
+   \caption{Good-quality teacher.}
+   \includegraphics[width=\columnwidth]{Figs/compet/External data 3/compet/Metric_vs_Eta TE.png}
+   \label{Eta_fig_compet:first}
+   \vspace{-0.2cm}  % Reduce vertical space
+\end{subfigure}
+\hfill
+% \begin{subfigure}{0.8\columnwidth}
+%    \centering
+%    \caption{Fair-quality external model.}
+%    \includegraphics[width=\columnwidth]{Figs/compet/External data 3/compet/Metric_vs_Eta TE_h1.png}
+%    \label{Eta_fig_compet:second}
+%    \vspace{-0.2cm}  % Reduce vertical space
+% \end{subfigure}  
+% \hfill
+\begin{subfigure}{0.8\textwidth}
+   \centering
+   \caption{Fair-quality teacher.}
+   \includegraphics[width=\textwidth]{Figs/compet/External data 3/compet/Metric_vs_Eta TE_h2.png}
+   \label{Eta_fig_compet:third}
+   \vspace{-0.2cm}  % Reduce vertical space
+\end{subfigure}  
+\hfill
+\begin{subfigure}{0.8\columnwidth}
+   \centering
+   \caption{Poor-quality teacher.}
+   \includegraphics[width=\columnwidth]{Figs/compet/External data 3/compet/Metric_vs_Eta TE_h3.png}
+   \label{Eta_fig_compet:forth}
+   \vspace{-0.2cm}  % Reduce vertical space
+\end{subfigure}  
+\caption{
+Test set $C^{td}$ and predictive deviance across varying values of the distillation weight $\eta$ under different teacher quality settings (a–c) for simulated competing risks data.  
+We compare three modeling strategies: (1) Internal: a Transformer-based discrete-time competing risks model trained on the internal dataset using all covariates;   (2) DiSKD-C: our KL-based knowledge distillation using teacher discrete-time cause-specific hazard predictions from a Transformer-based competing risks model; (3) DiSKD-O: a variation of our KL-based knowledge distillation using teacher discrete-time overall hazard predictions from a Transformer-based overall event (any risk) model. 
+% (3) DiSKD-B: a variation of our KL-based knowledge distillation using external binary predictions (i.e. event with 1st risk occurrence before $\tau_K$) from a Catboost-based binary classification model. 
+Each panel (a–c) corresponds to a different teacher quality level, reflecting varying degrees of covariate availability. 
+Results were averaged over 20 random replicates of simulated competing risks data. Higher $C^{td}$ and lower predictive deviance indicate better predictive performance.
+}
+\label{fig_compet_1:etaplot}
+\end{figure}
+
+
+
+\subsubsection{Distillation under Covariate Shift}
+\label{A.Sim.Hetero}
+To assess robustness when the teacher is learned from a population that is distributionally shifted relative to the student, we conduct a covariate-shift sensitivity analysis.
+We generate two teacher-training datasets representing moderate and severe shift, while keeping the student-training and test datasets identical to Appendix~\ref{A.SimSettings}.
+
+
+We retain the same covariate partition as Appendix~\ref{A.SimSettings}, with $\bm{X}=(X_1,\ldots,X_{12})^\top$ grouped into three blocks $\bm{X}_{1:4}$, $\bm{X}_{5:8}$, and $\bm{X}_{9:12}$.
+For each block $g\in\{1,2,3\}$, we draw an independent binary mask $\bm{m}_g\in\{0,1\}^4$ with i.i.d.\ entries $m_{g\ell}\sim\mathit{Bernoulli}(p)$ and sample
+\[
+\bm{X}_{g} \sim \mathcal{N}\!\left(\bm{m}_g \cdot s,\; \bm{I}_4\right),
+\]
+where $s$ controls the shift magnitude and $p$ controls the expected fraction of shifted coordinates within each block.
+
+Using the same linear summaries $Z_1=\sum_{p=1}^4 X_p$ and $Z_2=\sum_{p=5}^8 X_p$, we generate cause-specific latent failure times from exponential distributions, but with a different nonlinear component than in Appendix~\ref{A.SimSettings}.
+Specifically, instead of the squared linear combination $(\beta_3 Z_3)^2$ (with $Z_3=\sum_{p=9}^{12}X_p$), we use a separable sum-of-squares term:
+\begin{align*}
+D_1 &\sim \mathit{Exp}\!\left\{(\beta_1 Z_1)^2 + \sum_{p=9}^{12} (\beta_3 X_p)^2 \right\},\\
+D_2 &\sim \mathit{Exp}\!\left\{(\beta_2 Z_2)^2 + \sum_{p=9}^{12} (\beta_3 X_p)^2 \right\}.
+\end{align*}
+We then sample $C\sim\mathcal{U}(0, 500)$ and construct $(D,\Delta)$ as in Appendix~\ref{A.SimSettings}, with follow-up discretized into 20 intervals using Kaplan--Meier quantiles.
+Unless otherwise noted, we use $(\beta_1,\beta_2,\beta_3)=(2,2,8)$.
+
+We generate two teacher-training datasets ($n=10{,}000$ each): (i) moderate shift with $(s,p)=(-0.3,0.3)$ and (ii) severe shift with $(s,p)=(1.0,0.6)$.
+These regimes induce different censoring and incidence levels: the moderate-shift teacher population has event rates $23.26\%$ (risk~1) and $22.73\%$ (risk~2), while the severe-shift population has event rates $16.19\%$ (risk~1) and $16.36\%$ (risk~2).
+In both cases, the teacher is trained on the shifted population and the student is trained on the original internal cohort using DiSKD, isolating the effect of teacher--student covariate shift on knowledge transfer.
+
+
+Figure~\ref{fig_compet_1:hetero} shows that DiSKD remains effective under both moderate and severe shift, improving $C^{td}$ for both risks and reducing predictive deviance relative to the internal-only student.
+Notably, even when a shifted teacher is poorly calibrated on the student test distribution, distillation does not induce systematic degradation, consistent with robustness to covariate shift.
+
+
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}{0.7\columnwidth}
+   \centering
+   \caption{Moderate heterogeneous teacher.}
+   \includegraphics[width=\columnwidth]{Figs/compet/hetero/boxplot_hetero_1.png}
+   \label{Sim_hetero:first}
+   \vspace{-0.2cm}  % Reduce vertical space
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.7\columnwidth}
+   \centering
+   \caption{Severe heterogeneous teacher.}
+   \includegraphics[width=\columnwidth]{Figs/compet/hetero/boxplot_hetero_2.png}
+   \label{Sim_hetero:second}
+   \vspace{-0.2cm}  % Reduce vertical space
+\end{subfigure}
+\caption{
+Robust distillation under heterogeneous teacher-training datasets.
+Boxplots summarize test-set $C^{td}$ for each risk and predictive deviance when the teacher is trained on a distributionally shifted external cohort with (a) moderate and (b) severe heterogeneity.
+We compare Internal baseline, DiSKD, and the shifted Teacher evaluated on the same internal test set, highlighting that DiSKD improves over Internal and avoids negative transfer even when the teacher is misaligned.
+}
+\label{fig_compet_1:hetero}
+\end{figure}
+
+
+
+
+
+\subsubsection{Distilling a Specific Risk}
+\label{A.Sim.Specific}
+In addition to the standard competing-risks setting, we also evaluated the collapsed-risk variant of DiSKD described in Section~\ref{sec.specific}, where secondary risks are treated as censored and the model focuses exclusively on a single primary cause of failure. This setting follows the collapsed composite likelihood formulation. In this experiment, both student and teacher models were trained to predict discrete-time hazards only for the primary risk, and knowledge distillation was applied using the KL penalty defined for longitudinal binary outcomes. We refer to this configuration as DiSKD-S.
+
+Figure~\ref{fig_compet_1:boxplot_singleh} summarizes results across varying teacher quality levels. DiSKD-S consistently improves over the internal-only baseline, indicating that teacher guidance remains informative even after collapsing competing events into censoring. Overall, these results empirically support the collapsed-risk formulation and illustrate that DiSKD extends naturally to task-focused settings where only a single risk is of interest.
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.7\columnwidth]{Figs/compet/External data 1/singleh/boxplot_TE.png}
+\caption{
+Test set $C^{td}$ and predictive deviance for risk 1 under varying teacher quality settings (a–d) for simulated competing risks data. 
+We compare two modeling strategies with collapsed partial likelihood for risk 1:
+(1) Internal: a Transformer-based discrete-time competing risks model trained on the internal dataset using all covariates;  
+(2) DiSKD-S: a variation of our KL-based knowledge distillation using teacher discrete-time specific hazard predictions from a Transformer-based collapsed risk model.
+Each box (a–c) corresponds to a different teacher quality level, reflecting varying degrees of covariate availability. 
+% The tuning parameter $\eta$ was selected using 5-fold cross-validation on the internal training set.
+Results were summarized over 20 random replicates of simulated competing risks data. 
+% Higher $C^{td}$ and lower predictive deviance indicate better predictive performance.
+}
+\label{fig_compet_1:boxplot_singleh}
+\end{figure}
+
+
+\subsection{Benchmark Survival Data}
+\label{A.BenchmarkResults}
+
+\subsubsection{Training Sample Size Effect on SUPPORT}
+\label{A.BenchmarkResults.SampleSize}
+We examine how internal sample size affects predictive accuracy and stability on SUPPORT. We hold out a fixed test set (20\%, $n=1{,}765$) and vary the training size from 50 to 7{,}000 by subsampling the remaining data. For each training size, we fit a discrete-time Logistic Hazard model and evaluate on the same test set. Figure~\ref{fig:samplesize} reports the mean and standard deviation over 20 replicates. Performance improves and variability decreases monotonically with larger training sets, highlighting the small-sample fragility of discrete-time survival learning and motivating knowledge transfer when internal cohorts are limited.
+
+
+\begin{figure}[h]
+   \centering
+\begin{subfigure}{0.38\columnwidth}
+    \caption{Mean and standard deviation of C-index.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs/cindex_plot.png}
+    \vspace{-0.2cm}
+    \label{fig:cindex_plot}
+\end{subfigure}
+% \hfill
+\begin{subfigure}{0.38\columnwidth}
+    \caption{Mean and standard deviation of Log-likelihood.}
+    \vspace{-0.05cm}
+    \includegraphics[width=\columnwidth]{Figs/loss_plot.png}
+    \vspace{-0.2cm}
+    \label{fig:loss_plot}
+\end{subfigure}  
+\caption{
+    Test set performance of the discrete-time deep learning survival model across varying internal training sample sizes, without distillation. 
+    All experiments were conducted on the fixed SUPPORT dataset, with the test set held out (20\%, $n = 1765$) and the training sample size varied from 50 to 7000 by subsampling the remaining data. 
+    Each point represents the mean or standard deviation over 20 random splits. 
+    Panel (a) reports the mean $C^{td}$ (left $y$-axis, solid blue) and its standard deviation (right $y$-axis, dashed red) as training size increases. 
+    Panel (b) shows the mean predictive log-likelihood (left $y$-axis, solid blue) and its standard deviation (right $y$-axis, dashed red). 
+    Larger training sample sizes generally yield improved average performance and reduced variability, demonstrating the benefit of more internal information for model stability and generalization.
+    }
+\label{fig:samplesize}
+\end{figure}
+
+\subsubsection{Knowledge Distillation From Large to Small Cohorts}
+\label{A.BenchmarkResults.Tables}
+We evaluate distillation from a large teacher cohort to a small student cohort on SUPPORT. 
+We randomly split the data into a held-out test set (20\%, $n=1{,}765$), an internal (student) training set (4\%, $n=354$), and an external (teacher) training set (76\%, $n=6{,}712$). 
+We report results for five discrete-time architectures: Nnet-survival with logit and complementary log--log links, Logistic Hazard, Time-Embedded Logistic Hazard, and a Transformer model. 
+Within each architecture, the teacher and student use the same network structure to isolate the effect of distillation from architectural differences.
+
+To vary teacher informativeness, we construct four teacher-covariate regimes by restricting the covariates available to the teacher while keeping the student covariates fixed:
+(a) Excellent: all 14 covariates; 
+(b) Good: three covariates removed; 
+(c) Fair: seven covariates retained; 
+(d) Poor: four covariates retained. 
+We compare three training strategies: (i) Internal, a student trained only on the internal cohort; (ii) DiSKD, a student trained on the internal cohort with KL distillation from the teacher predictions (with $\eta$ tuned by 5-fold cross-validation on the internal training set); and (iii) Teacher, a model trained only on the external cohort (reported as a reference for how informative the teacher is on the internal test distribution).
+
+Table~\ref{tab:local_total} summarizes test-set $C^{td}$, predictive deviance, IBS, and IBLL (mean and standard deviation over 20 random splits). 
+Across architectures, DiSKD improves over the internal-only baseline in most settings, with the largest gains under excellent/good teacher covariates and progressively smaller gains as the teacher covariate set is degraded. 
+Notably, when the teacher is weak (fair/poor), distillation remains stable: performance typically tracks the internal baseline rather than collapsing toward the teacher-alone model, suggesting limited negative transfer from low-informativeness teacher guidance.
+We also observe architecture-dependent sensitivity: higher-capacity students (Transformer, Time-Embedded) tend to extract more benefit when the teacher signal is strong, while simpler students show smaller and less consistent gains under degraded teacher covariates.
+
+
+% \begin{table}[htbp]
+% \caption{
+% Prediction performance across different teacher quality settings (a)--(d), evaluated under 5 kinds of network structures of discrete-time deep learning survival models. 
+% The SUPPORT dataset was randomly split into three parts: a test set (20\%, $n=1765$), an internal dataset (4\%, $n=354$), and an external teacher dataset (76\%, $n=6712$). 
+% Both student and teacher models used the same network architecture within each row for fair comparison.
+% We compare three modeling strategies: 
+% (1) Internal: a discrete-time survival model trained on the internal dataset using all covariates;  
+% (2) DiSKD: our KL-based distillation approach using discrete-time hazard predictions from a teacher model with corresponding covariates quality levels (a)--(d), tuning parameter $\eta$ selected using 5-fold cross-validation on the internal training set;
+% (3) Teacher: a discrete-time survival model trained solely on the external dataset using all covariates.
+% Each entry reports the mean and standard deviation (in parentheses) of the time-dependent concordance $C^{td}$, predictive deviance, integrated Brier score (IBS), and integrated negative binomial log-likelihood (IBLL) evaluated on the held-out test set over 20 random splits.
+% Higher $C^{td}$ and lower values of the other three metrics indicate better predictive performance.
+% Overall, DiSKD improves prediction over the internal-only model across most settings, especially when teacher quality is high.
+% }
+% \centering
+% \begin{small}
+% \label{tab:local_total}
+% % \scalebox{0.78}{
+% \begin{tabular}{llllllll} & & & & & & & \\ 
+% \toprule
+% \multirow{2}{*}{Structures}      & \multirow{2}{*}{Method} & \multicolumn{2}{l}{External model} & \multirow{2}{*}{$C^{td}$} & \multirow{2}{*}{Pred Dev} & \multirow{2}{*}{IBS} & \multirow{2}{*}{IBLL}  \\ 
+% \cmidrule{3-4} & & Setting & Quality & & \\ 
+% \hline\hline
+% \multirow{6}{*}{\makecell{Nnet-survival \\ (Logit)}}
+% & Internal & - & - & 0.544 (0.012) & 2.223 (0.053) & 0.189 (0.008) & 0.569 (0.024) \\ 
+% \cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & 0.566 (0.015) &  2.118 (0.046) & 0.168 (0.005) & 0.509 (0.013) \\
+%                         & & (b) & Good & 0.559 (0.019) & 2.125 (0.039) & 0.170 (0.005) & 0.513 (0.015) \\
+%                         & & (c) & Fair & 0.546 (0.013) & 2.132 (0.036) & 0.170 (0.004) & 0.515 (0.013) \\
+%                         & & (d) & Poor & 0.534 (0.012) & 2.126 (0.042) & 0.170 (0.003) & 0.514 (0.008) \\ 
+% \cmidrule{2-8} 
+% & Teacher & - & - & 0.614 (0.008) & 2.032 (0.029) & 0.159 (0.003) & 0.485 (0.008) \\ 
+% % & All data & - & - & 0.614 (0.009) & 2.035 (0.026) \\ 
+% \hline\hline
+% \multirow{6}{*}{\makecell{Nnet-survival \\ (C-log-log)}}
+% & Internal & - & - & 0.544 (0.014) & 2.195 (0.039) & 0.185 (0.007) & 0.557 (0.016) \\ 
+% \cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & 0.566 (0.015) & 2.110 (0.032) & 0.168 (0.004) & 0.507 (0.009) \\
+%                                  & & (b) & Good & 0.556 (0.020) & 2.114 (0.032) & 0.195 (0.114) & 0.510 (0.011) \\
+%                                  & & (c) & Fair & 0.548 (0.016) & 2.118 (0.031) & 0.195 (0.116) & 0.509 (0.009) \\
+%                                  & & (d) & Poor & 0.528 (0.013) & 2.128 (0.030) & 0.224 (0.156) & 0.518 (0.013) \\ 
+% \cmidrule{2-8} 
+% & Teacher & - & - & 0.617 (0.010) & 2.029 (0.027) & 0.158 (0.003) & 0.482 (0.007) \\ 
+% % & All data & - & - & 0.615 (0.010) & 2.029 (0.030) \\ 
+% \hline\hline
+% \multirow{6}{*}{Logistic Hazard} & Internal & - & - & 0.546 (0.020) & 2.212 (0.085) & 0.176 (0.006) & 0.541 (0.024) \\ 
+% \cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & 0.585 (0.013) & 2.061 (0.040) & 0.165 (0.004) & 0.499 (0.01) \\
+%                                  & & (b) & Good & 0.575 (0.018) & 2.088 (0.051) & 0.166 (0.004) & 0.508 (0.015) \\
+%                                  & & (c) & Fair & 0.563 (0.014) & 2.069 (0.034) & 0.165 (0.003) & 0.501 (0.011) \\
+%                                  & & (d) & Poor & 0.545 (0.016) & 2.077 (0.030) & 0.166 (0.003) & 0.504 (0.009) \\ 
+% \cmidrule{2-8} 
+% & Teacher & - & - & 0.623 (0.013) & 2.024 (0.028) & 0.165 (0.004) & 0.483 (0.009) \\ 
+% % & All data & - & - & 0.619 (0.010) & 2.023 (0.031) \\ 
+% \hline\hline
+% \multirow{6}{*}{Time Embedding} & Internal & - & - & 0.560 (0.026) & 2.104 (0.037) & 0.168 (0.004) & 0.507 (0.011) \\ 
+% \cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & 0.616 (0.011) & 2.017 (0.027) & 0.159 (0.003) & 0.483 (0.007) \\
+%                                      & & (b) & Good & 0.611 (0.025) & 2.030 (0.036) & 0.160 (0.003) & 0.485 (0.008) \\
+%                                      & & (c) & Fair & 0.593 (0.014) & 2.043 (0.026) & 0.161 (0.003) & 0.487 (0.007) \\
+%                                      & & (d) & Poor & 0.579 (0.019) & 2.054 (0.034) & 0.163 (0.003) & 0.492 (0.008) \\ 
+% \cmidrule{2-8} 
+% & Teacher & - & - & 0.623 (0.011) & 2.017 (0.027) & 0.158 (0.003) & 0.479 (0.009) \\ 
+% % & All data & - & - & 0.626 (0.010) & 2.012 (0.030) \\ 
+% \hline\hline
+% \multirow{6}{*}{Transformer} & Internal & - & - & 0.563 (0.023) & 2.088 (0.033) & 0.167 (0.005) & 0.503 (0.011) \\ 
+% \cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & 0.621 (0.012) & 2.034 (0.032) & 0.159 (0.003) & 0.483 (0.008) \\
+%                                    & & (b) & Good & 0.618 (0.013) & 2.034 (0.028) & 0.159 (0.003) & 0.483 (0.008) \\
+%                                    & & (c) & Fair & 0.593 (0.015) & 2.052 (0.032) & 0.162 (0.003) & 0.490 (0.008) \\
+%                                    & & (d) & Poor & 0.578 (0.020) & 2.061 (0.030) & 0.163 (0.003) & 0.493 (0.008) \\ 
+% \cmidrule{2-8} 
+% & Teacher & - & - & 0.625 (0.012) & 2.031 (0.032) & 0.158 (0.003) & 0.479 (0.008) \\ 
+% % & All data & - & - & 0.624 (0.014) & 2.031 (0.033) \\ 
+% \bottomrule & & & & & \\
+%  & & & & &                      
+% \end{tabular}
+% \end{small}
+% % }
+% \end{table}
+
+
+\begin{table}[htbp]
+\caption{
+Prediction performance across different teacher quality settings (a)--(d), evaluated under 5 kinds of network structures of discrete-time deep learning survival models. 
+The SUPPORT dataset was randomly split into three parts: a test set (20\%, $n=1765$), an internal dataset (4\%, $n=354$), and an external teacher dataset (76\%, $n=6712$). 
+Both student and teacher models used the same network architecture within each row for fair comparison.
+We compare three modeling strategies: 
+(1) Internal: a discrete-time survival model trained on the internal dataset using all covariates;  
+(2) DiSKD: our KL-based distillation approach using discrete-time hazard predictions from a teacher model with corresponding covariates quality levels (a)--(d), tuning parameter $\eta$ selected using 5-fold cross-validation on the internal training set;
+(3) Teacher: a discrete-time survival model trained solely on the external dataset using all covariates.
+Each entry reports the mean and standard deviation (in parentheses) of the time-dependent concordance $C^{td}$, predictive deviance, integrated Brier score (IBS), and integrated binomial log-likelihood (IBLL) evaluated on the held-out test set over 20 random splits.
+Higher $C^{td}$ and lower values of the other three metrics indicate better predictive performance (darker colors).
+Overall, DiSKD improves prediction over the internal-only model across most settings, especially when teacher quality is high.
+}
+\centering
+\begin{small}
+\label{tab:local_total}
+% \scalebox{0.78}{
+\begin{tabular}{llllllll} & & & & & & & \\ 
+\toprule
+\multirow{2}{*}{Structures}      & \multirow{2}{*}{Method} & \multicolumn{2}{l}{External model} & \multirow{2}{*}{$C^{td} \uparrow$} & \multirow{2}{*}{Pred Dev $\downarrow$} & \multirow{2}{*}{IBS $\downarrow$} & \multirow{2}{*}{IBLL $\downarrow$}  \\ 
+\cmidrule{3-4} & & Setting & Quality & & \\ 
+\hline\hline
+\multirow{6}{*}{\makecell{Nnet-survival \\ (Logit)}}
+& Internal & - & - & \cellcolor{blkA!20}0.544 (0.012) & \cellcolor{blkA!12}2.223 (0.053) & \cellcolor{blkA!12}0.189 (0.008) & \cellcolor{blkA!12}0.569 (0.024) \\ 
+\cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & \cellcolor{blkA!36}0.566 (0.015) &  \cellcolor{blkA!36}2.118 (0.046) & \cellcolor{blkA!36}0.168 (0.005) & \cellcolor{blkA!36}0.509 (0.013) \\
+                        & & (b) & Good & \cellcolor{blkA!28}0.559 (0.019) & \cellcolor{blkA!28}2.125 (0.039) & \cellcolor{blkA!28}0.170 (0.005) & \cellcolor{blkA!28}0.513 (0.015) \\
+                        & & (c) & Fair & \cellcolor{blkA!28}0.546 (0.013) & \cellcolor{blkA!20}2.132 (0.036) & \cellcolor{blkA!28}0.170 (0.004) & \cellcolor{blkA!20}0.515 (0.013) \\
+                        & & (d) & Poor & \cellcolor{blkA!12}0.534 (0.012) & \cellcolor{blkA!28}2.126 (0.042) & \cellcolor{blkA!28}0.170 (0.003) & \cellcolor{blkA!28}0.514 (0.008) \\ 
+\cmidrule{2-8} 
+& Teacher & - & - & \cellcolor{blkA!44}0.614 (0.008) & \cellcolor{blkA!44}2.032 (0.029) & \cellcolor{blkA!44}0.159 (0.003) & \cellcolor{blkA!44}0.485 (0.008) \\ 
+% & All data & - & - & 0.614 (0.009) & 2.035 (0.026) \\ 
+\hline\hline
+\multirow{6}{*}{\makecell{Nnet-survival \\ (C-log-log)}}
+& Internal & - & - & \cellcolor{blkB!20}0.544 (0.014) & \cellcolor{blkB!12}2.195 (0.039) & \cellcolor{blkB!28}0.185 (0.007) & \cellcolor{blkB!12}0.557 (0.016) \\ 
+\cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & \cellcolor{blkB!36}0.566 (0.015) & \cellcolor{blkB!36}2.110 (0.032) & \cellcolor{blkB!36}0.168 (0.004) & \cellcolor{blkB!36}0.507 (0.009) \\
+                                 & & (b) & Good & \cellcolor{blkB!28}0.556 (0.020) & \cellcolor{blkB!28}2.114 (0.032) & \cellcolor{blkB!28}0.195 (0.114) & \cellcolor{blkB!28}0.510 (0.011) \\
+                                 & & (c) & Fair & \cellcolor{blkB!28}0.548 (0.016) & \cellcolor{blkB!28}2.118 (0.031) & \cellcolor{blkB!28}0.195 (0.116) & \cellcolor{blkB!28}0.509 (0.009) \\
+                                 & & (d) & Poor & \cellcolor{blkB!12}0.528 (0.013) & \cellcolor{blkB!20}2.128 (0.030) & \cellcolor{blkB!12}0.224 (0.156) & \cellcolor{blkB!20}0.518 (0.013) \\ 
+\cmidrule{2-8} 
+& Teacher & - & - & \cellcolor{blkB!44}0.617 (0.010) & \cellcolor{blkB!44}2.029 (0.027) & \cellcolor{blkB!44}0.158 (0.003) & \cellcolor{blkB!44}0.482 (0.007) \\ 
+% & All data & - & - & 0.615 (0.010) & 2.029 (0.030) \\ 
+\hline\hline
+\multirow{6}{*}{Logistic Hazard} & Internal & - & - & \cellcolor{blkC!20}0.546 (0.020) & \cellcolor{blkC!12}2.212 (0.085) & \cellcolor{blkC!12}0.176 (0.006) & \cellcolor{blkC!12}0.541 (0.024) \\ 
+\cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & \cellcolor{blkC!36}0.585 (0.013) & \cellcolor{blkC!36}2.061 (0.040) & \cellcolor{blkC!44}0.165 (0.004) & \cellcolor{blkC!36}0.499 (0.01) \\
+                                 & & (b) & Good & \cellcolor{blkC!28}0.575 (0.018) & \cellcolor{blkC!20}2.088 (0.051) & \cellcolor{blkC!28}0.166 (0.004) & \cellcolor{blkC!20}0.508 (0.015) \\
+                                 & & (c) & Fair & \cellcolor{blkC!28}0.563 (0.014) & \cellcolor{blkC!28}2.069 (0.034) & \cellcolor{blkC!44}0.165 (0.003) & \cellcolor{blkC!28}0.501 (0.011) \\
+                                 & & (d) & Poor & \cellcolor{blkC!12}0.545 (0.016) & \cellcolor{blkC!28}2.077 (0.030) & \cellcolor{blkC!28}0.166 (0.003) & \cellcolor{blkC!28}0.504 (0.009) \\ 
+\cmidrule{2-8} 
+& Teacher & - & - & \cellcolor{blkC!44}0.623 (0.013) & \cellcolor{blkC!44}2.024 (0.028) & \cellcolor{blkC!44}0.165 (0.004) & \cellcolor{blkC!44}0.483 (0.009) \\ 
+% & All data & - & - & 0.619 (0.010) & 2.023 (0.031) \\ 
+\hline\hline
+\multirow{6}{*}{Time Embedding} & Internal & - & - & \cellcolor{blkD!12}0.560 (0.026) & \cellcolor{blkD!12}2.104 (0.037) & \cellcolor{blkD!12}0.168 (0.004) & \cellcolor{blkD!12}0.507 (0.011) \\ 
+\cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & \cellcolor{blkD!36}0.616 (0.011) & \cellcolor{blkD!44}2.017 (0.027) & \cellcolor{blkD!36}0.159 (0.003) & \cellcolor{blkD!36}0.483 (0.007) \\
+                                     & & (b) & Good & \cellcolor{blkD!28}0.611 (0.025) & \cellcolor{blkD!28}2.030 (0.036) & \cellcolor{blkD!28}0.160 (0.003) & \cellcolor{blkD!28}0.485 (0.008) \\
+                                     & & (c) & Fair & \cellcolor{blkD!28}0.593 (0.014) & \cellcolor{blkD!28}2.043 (0.026) & \cellcolor{blkD!28}0.161 (0.003) & \cellcolor{blkD!28}0.487 (0.007) \\
+                                     & & (d) & Poor & \cellcolor{blkD!20}0.579 (0.019) & \cellcolor{blkD!20}2.054 (0.034) & \cellcolor{blkD!20}0.163 (0.003) & \cellcolor{blkD!20}0.492 (0.008) \\ 
+\cmidrule{2-8} 
+& Teacher & - & - & \cellcolor{blkD!44}0.623 (0.011) & \cellcolor{blkD!44}2.017 (0.027) & \cellcolor{blkD!44}0.158 (0.003) & \cellcolor{blkD!44}0.479 (0.009) \\ 
+% & All data & - & - & 0.626 (0.010) & 2.012 (0.030) \\ 
+\hline\hline
+\multirow{6}{*}{Transformer} & Internal & - & - & \cellcolor{blkE!12}0.563 (0.023) & \cellcolor{blkE!12}2.088 (0.033) & \cellcolor{blkE!12}0.167 (0.005) & \cellcolor{blkE!12}0.503 (0.011) \\ 
+\cmidrule{2-8} & \multirow{4}{*}{DiSKD} & (a) & Excellent & \cellcolor{blkE!36}0.621 (0.012) & \cellcolor{blkE!36}2.034 (0.032) & \cellcolor{blkE!36}0.159 (0.003) & \cellcolor{blkE!36}0.483 (0.008) \\
+                                   & & (b) & Good & \cellcolor{blkE!28}0.618 (0.013) & \cellcolor{blkE!36}2.034 (0.028) & \cellcolor{blkE!36}0.159 (0.003) & \cellcolor{blkE!36}0.483 (0.008) \\
+                                   & & (c) & Fair & \cellcolor{blkE!28}0.593 (0.015) & \cellcolor{blkE!28}2.052 (0.032) & \cellcolor{blkE!28}0.162 (0.003) & \cellcolor{blkE!28}0.490 (0.008) \\
+                                   & & (d) & Poor & \cellcolor{blkE!20}0.578 (0.020) & \cellcolor{blkE!20}2.061 (0.030) & \cellcolor{blkE!20}0.163 (0.003) & \cellcolor{blkE!20}0.493 (0.008) \\ 
+\cmidrule{2-8} 
+& Teacher & - & - & \cellcolor{blkE!44}0.625 (0.012) & \cellcolor{blkE!44}2.031 (0.032) & \cellcolor{blkE!44}0.158 (0.003) & \cellcolor{blkE!44}0.479 (0.008) \\ 
+% & All data & - & - & 0.624 (0.014) & 2.031 (0.033) \\ 
+\bottomrule & & & & & \\
+ & & & & &                      
+\end{tabular}
+\end{small}
+% }
+\end{table}
+
+
+
+To assess whether the gains in SUPPORT carry over to other disease domains, we further evaluate DiSKD on two widely used cancer survival benchmarks, METABRIC and Rot.\ \& GBSG.
+For each dataset, we follow the same large-to-small transfer protocol as in SUPPORT, randomly splitting the data into a held-out test set (20\%), an internal student cohort (4\%), and an external teacher cohort (76\%).
+Both teacher and student are implemented as Transformer-based discrete-time survival networks to keep the modeling pipeline fixed across datasets.
+
+Table~\ref{tab:local_total2} reports test-set $C^{td}$, predictive deviance, IBS, and IBLL.
+Across both METABRIC and GBSG, DiSKD improves over the internal-only baseline on all metrics, indicating that teacher-guided KL regularization yields consistent gains beyond a single cohort.
+The improvements are larger on METABRIC than on GBSG, consistent with METABRIC providing a stronger and more stable teacher signal in this split regime, while the smaller GBSG cohort yields more modest but still consistent transfer gains.
+
+Overall, these results suggest that DiSKD is not tied to a particular dataset or event profile, but provides a broadly applicable mechanism for transferring predictive structure from a teacher survival model to a student trained on a limited internal cohort.
+
+
+
+\begin{table}[htbp]
+\caption{
+Prediction performance across METABRIC and GBSG, evaluated using Transformer-based discrete-time deep learning survival model.
+Each dataset is randomly split into test (20\%), internal (4\%), and external (76\%) subsets.
+Both student and teacher models used the same network architecture within each row for fair comparison.
+We compare three modeling strategies: 
+(1) Internal: a discrete-time survival model trained on the internal dataset using all covariates;  
+(2) DiSKD: our KL-based distillation approach using discrete-time hazard predictions from a teacher model using all covariates, tuning parameter $\eta$ selected using 5-fold cross-validation on the internal training set;
+(3) Teacher: a discrete-time survival model trained solely on the external dataset using all covariates.
+Each entry reports the mean and standard deviation (in parentheses) of the time-dependent concordance $C^{td}$, predictive deviance, integrated Brier score (IBS), and integrated binomial log-likelihood (IBLL) evaluated on the held-out test set over 20 random splits.
+Higher $C^{td}$ and lower values of the other three metrics indicate better predictive performance.
+}
+\centering
+\label{tab:local_total2}
+\begin{tabular}{llllll} & & & & & \\ 
+\toprule
+Dataset   & Method &  $C^{td} \uparrow$ & Pred Dev $\downarrow$ & IBS $\downarrow$ & IBLL $\downarrow$  \\ 
+\midrule
+\multirow{3}{*}{\makecell{Metabric}}
+& Internal                & 0.602 (0.047) & 2.117 (0.090) & 0.174 (0.017) & 0.530 (0.049) \\ 
+\cmidrule{2-6} & DiSKD    & 0.657 (0.021) & 1.972 (0.072) & 0.158 (0.011) & 0.477 (0.030) \\
+\cmidrule{2-6} & Teacher & 0.674 (0.017) & 1.928 (0.052) & 0.148 (0.008) & 0.450 (0.019) \\ 
+% & All data & - & - & 0.614 (0.009) & 2.035 (0.026) \\ 
+\midrule
+\multirow{3}{*}{\makecell{GBSG}}
+& Internal                & 0.607 (0.054) & 2.338 (0.095) & 0.184 (0.013) & 0.543 (0.029) \\ 
+\cmidrule{2-6} & DiSKD    & 0.651 (0.030) & 2.228 (0.070) & 0.169 (0.012) & 0.505 (0.030) \\
+\cmidrule{2-6} & Teacher & 0.678 (0.017) & 2.176 (0.084) & 0.158 (0.008) & 0.475 (0.021) \\ 
+% & All data & - & - & 0.624 (0.014) & 2.031 (0.033) \\ 
+\bottomrule              
+\end{tabular}
+\end{table}
+
+
+
+
+\subsection{SRTR Model Updating}
+
+\subsubsection{Coupled temporal and geospatial shift under policy and pandemic forces}
+\label{A.SRTR1.Temporal}
+
+During the COVID period, transplant activity was shaped by two concurrent structural forces.
+First, the nationwide implementation of KAS250 in March~2021 expanded organ sharing within a 250-mile radius of the donor hospital, broadening geographic access but substantially modifying the donor–recipient mix and center-level practice patterns.
+Second, the COVID-19 pandemic disrupted all stages of transplant care, producing fluctuations in transplant volume, elevated mortality among immunosuppressed recipients, and changes in donor availability and screening.
+The overlap of these two influences resulted in complex population drift and outcome shift, creating a realistic setting for evaluating methods that transfer predictive information across evolving clinical environments.
+
+
+As shown in Figure~\ref{fig_srtr:results}a, the pre-COVID period exhibits relatively stable one-year mortality and graft failure rates. During COVID (2020–2023), mortality increases and becomes more volatile, with a marked peak during the Alpha surge in early 2021, whereas graft failure remains comparatively stable, suggesting that patient survival was more sensitive to pandemic-related disruptions than graft viability. Following this period, outcomes transition into a new post-pandemic regime, shaped by lingering pandemic effects and recent policy changes. Overall, the trajectory underscores a non-stationary data-generating process and cautions against naively applying models trained on pooled historical data to the most current clinical population.
+
+Figure~\ref{fig:SRTR_trend} further depict transplant center–level death and graft failure rates during the COVID+KAS250 and post-pandemic periods.  
+Each circle represents a transplant center, with both size and color intensity proportional to the observed event rate.  
+Regional contrasts are evident: higher mortality clusters appear in the Midwest and South during the pandemic period, with noticeable improvements after 2023, whereas graft failure rates remain comparatively stable across regions.  
+These spatial patterns, combined with the temporal trends, highlight pronounced non-stationarity in both baseline hazards and center effects, revealing the importance of adaptive modeling frameworks that can transfer, update, and recalibrate knowledge across evolving clinical regimes.
+
+
+\begin{figure}[htbp]
+\centering
+% \begin{subfigure}{0.80\textwidth}
+%     \caption{Monthly trends in death and graft failure rates.}
+%     % \vspace{-0.2cm}
+%     \includegraphics[width=\textwidth]{Figs/SRTR/A_main_timeseries_clean_no_smooth.pdf}
+%     \vspace{-0.2cm}
+%     \label{fig:SRTR_trend (a)}
+% \end{subfigure}
+% \hfill
+\begin{subfigure}{0.40\textwidth}
+    \caption{Death rate (per 100 person–months) of transplant centers in the COVID+KAS250 period.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\textwidth]{Figs/SRTR/map/death COVID.png}
+    \vspace{-0.2cm}
+    \label{fig:SRTR_map (b)}
+\end{subfigure}
+% \hfill
+\begin{subfigure}{0.40\textwidth}
+    \caption{Death rate (per 100 person–months) of transplant centers in the post-pandemic period.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\textwidth]{Figs/SRTR/map/death post-COVID.png}
+    \vspace{-0.2cm}
+    \label{fig:SRTR_map (c)}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.40\textwidth}
+    \caption{Graft failure rate (per 100 person–months) of transplant centers in the COVID+KAS250 period.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\textwidth]{Figs/SRTR/map/graft failure COVID.png}
+    \vspace{-0.2cm}
+    \label{fig:SRTR_map (d)}
+\end{subfigure}
+% \hfill
+\begin{subfigure}{0.40\textwidth}
+    \caption{Graft failure rate (per 100 person–months) of transplant centers in the post-pandemic period.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\textwidth]{Figs/SRTR/map/graft failure post-COVID.png}
+    \vspace{-0.2cm}
+    \label{fig:SRTR_map (e)}
+\end{subfigure}
+\caption{
+Temporal and center-level patterns in post-transplant outcomes. 
+% (a) Monthly death and graft failure rates (per 100 person–months) from January 2019 to July 2024.  Vertical dashed lines mark the onset of COVID-19, the KAS250 policy implementation, and the post-pandemic transition. 
+(a–b) Transplant center–specific death rates (per 100 person–months) during the COVID+KAS250 and post-pandemic periods, respectively.  
+(c–d) Corresponding center-level graft failure rates for the same two periods.  
+Each circle represents a transplant center, where both circle size and color intensity are proportional to the center’s event rate.  
+Together, the panels reveal temporal shifts and regional heterogeneity in mortality and graft failure, highlighting structural changes in transplant outcomes across centers and motivating adaptive modeling strategies.
+}
+\label{fig:SRTR_trend}
+\end{figure}
+
+
+\subsubsection{Teacher Model Heterogeneity in Architectures and Covariates}
+\label{A.SRTR1.TeacherHetero}
+To evaluate robustness to heterogeneous teachers, we varied the teacher model by architecture and covariate quality. Architectures included a Transformer and a linear discrete model (to mimic the coefficient-based registry models); teacher covariate quality was assessed at three levels:
+(a) Good: all covariates;
+(b) Fair: center indicators excluded;
+(c) Poor: only variables used in the SRTR risk-adjusted model.
+
+
+Panels (a) and (b) evaluate robustness under teacher heterogeneity.
+Even when the teacher was weakened by covariate omission or architectural mismatch, DiSKD maintained improvements in discrimination and deviance.
+While Panel~(a) uses a high-capacity Transformer, Panel~(b) considers a simple linear hazard model—an important scenario in practice, as many clinical registries (including SRTR) publicly release only coefficient-based survival models with limited covariates.  
+Despite the mismatch between a linear teacher and a deep student network, DiSKD continued to improve over internal-only training and over the teacher itself, indicating that prediction-level distillation can extract useful guidance without inheriting the teacher's modeling constraints.
+
+
+\begin{figure}[htbp]
+\centering
+% \begin{subfigure}{1.0\columnwidth}
+%     \caption{External model trained on COVID cohort  }
+%     % \vspace{-0.2cm}
+%     \includegraphics[width=\columnwidth]{Figs_icml/SRTR/covid/boxplot TR.png}
+%     \vspace{-0.2cm}
+%     \label{SRTR_box:covid}
+% \end{subfigure} 
+% % \hfill
+% \par\vspace{-4mm}
+\begin{subfigure}{0.7\columnwidth}
+    \caption{Teacher architecture: Transformer.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs_icml/SRTR/covid/boxplot_TR_multi_mis.png}
+    \vspace{-0.2cm}
+    \label{SRTR_box_mis:covid}
+\end{subfigure}
+% \hfill
+\par\vspace{-4mm}
+\begin{subfigure}{0.7\columnwidth}
+    \caption{Teacher architecture: linear discrete model.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs_icml/SRTR/covid_low/boxplot_TR_multi_mis.png}
+    \vspace{-0.2cm}
+    \label{SRTR_box_mis_low:covid}
+\end{subfigure}
+\caption{
+Predictive performance on the post-COVID internal cohort under different teacher modeling scenarios. 
+All models are discrete-time competing risks models for death (risk~1) and graft failure (risk~2).
+Panels (a) and (b) evaluate the robustness of DiSKD with respect to teacher model architecture and covariate quality. 
+In (a), the teacher model is a Transformer; in (b), a linear discrete model. 
+Each architecture is trained on the COVID cohort with three covariate sets: 
+(a) all covariates, 
+(b) excluding transplant center indicators, 
+and (c) using only variables selected by the SRTR risk-adjusted model. 
+Boxplots summarize $C^{td}$ for both risks and predictive deviance, aggregated over 10 repetitions of 5-fold cross-validation. 
+Results show that DiSKD remains robust even when teachers are weak or trained with incomplete covariates.
+}
+\label{SRTR_boxplots_mis}
+\end{figure}
+
+
+
+
+\subsubsection{Model Interpretation via Variable Importance}
+\label{A.SRTR1.SHAP}
+Beyond predictive accuracy, post-transplant risk models are often used to identify which variables most drive risk.
+We therefore assess the stability of SHAP-based feature-importance rankings.
+Panel (a) in Figure~\ref{SRTR_shap_values2:covid} reports the Jaccard overlap of the top-20 SHAP features across random seeds; DiSKD shows higher overlap for both death and graft failure, indicating more reproducible interpretations under data perturbations.
+%The corresponding top-20 feature rankings are provided in Appendix~\ref{A.SRTR1.SHAP}.
+
+
+
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=0.50\columnwidth]{Figs_icml/SRTR/covid/shap_stability.png}
+% \caption{The pairwise Jaccard index of the top 20 SHAP-ranked features across all ${5 \choose 2} = 10$ combinations of five random data splits, quantifying the consistency of variable selection for each method and risk.}
+% \label{SRTR_shap}
+% \end{figure}
+
+
+
+Panels (b) and (c) in list the top 20 predictors of one-year death and graft failure by ranking the SHAP values. Age, Kidney Donor Risk Index, and dialysis duration ranked highest, matching known prognostic factors. Other features, such as donor comorbidities and ischemia time, also aligned with clinical mechanisms. Overall, DiSKD produced variable importance patterns that were more consistent and clinically coherent than internal-only or external-only models.
+
+
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}{0.52\columnwidth}
+    \caption{Stability of variable importance across data splits (Jaccard index of top 20 SHAP features)}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs_icml/SRTR/covid/shap_stability.png}
+    \vspace{-0.2cm}
+    \label{SRTR_shap:covid}
+\end{subfigure}
+% \hfill
+\begin{subfigure}{0.48\columnwidth}
+    \caption{Top 20 SHAP-ranked features for predicting one-year CIF of death (Risk 1) using DiSKD.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs/SRTR/covid/shap_values_bar_risk1.png}
+    \vspace{-0.2cm}
+    \label{SRTR_shap_values1:covid}
+\end{subfigure}
+\hspace{0.02\textwidth}
+\begin{subfigure}{0.48\columnwidth}
+    \caption{Top 20 SHAP-ranked features for predicting one-year CIF of graft failure (Risk 2) using DiSKD.}
+    % \vspace{-0.2cm}
+    \includegraphics[width=\columnwidth]{Figs/SRTR/covid/shap_values_bar_risk2.png}
+    \vspace{-0.2cm}
+    \label{SRTR_shap_values2:covid}
+\end{subfigure}
+\caption{
+Interpretability analysis of DiSKD using SHAP values.
+Panel (a) shows the pairwise Jaccard index of the top 20 SHAP-ranked features across all ${5 \choose 2} = 10$ combinations of five random data splits, quantifying the consistency of variable selection for each method and risk.
+Panels (b) and (v) display the top 20 SHAP-ranked features for predicting the one-year CIF (i.e. at the final time point) of death and graft failure, respectively, as identified by the DiSKD model. Rankings are based on mean absolute SHAP values averaged across five random data splits, with error bars representing the standard error.
+}
+\label{SRTR_shap2}
+\end{figure}
+
+
+
+
+% \subsection{SRTR Donor Risk Prediction}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
+
+% This document was modified from the file originally made available by
+% Pat Langley and Andrea Danyluk for ICML-2K. This version was created
+% by Iain Murray in 2018, and modified by Alexandre Bouchard in
+% 2019 and 2021 and by Csaba Szepesvari, Gang Niu and Sivan Sabato in 2022.
+% Modified again in 2023 and 2024 by Sivan Sabato and Jonathan Scarlett.
+% Previous contributors include Dan Roy, Lise Getoor and Tobias
+% Scheffer, which was slightly modified from the 2010 version by
+% Thorsten Joachims & Johannes Fuernkranz, slightly modified from the
+% 2009 version by Kiri Wagstaff and Sam Roweis's 2008 version, which is
+% slightly modified from Prasad Tadepalli's 2007 version which is a
+% lightly changed version of the previous year's version by Andrew
+% Moore, which was in turn edited from those of Kristian Kersting and
+% Codrina Lauth. Alex Smola contributed to the algorithmic style files.

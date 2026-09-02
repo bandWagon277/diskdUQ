@@ -1,0 +1,253 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\given}{\,\vert\,}
+\newcommand{\ind}[1]{\mathbf{1}\!\left\{#1\right\}}
+\newcommand{\dd}{\,\mathrm{d}}
+
+\title{The Event Projection Problem in Event-Driven Clinical Trials\\
+\large A Bayesian Event-and-Time Landmark Formulation (BEATLES)}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Problem statement}
+
+Many confirmatory trials---most oncology trials in particular---are
+\emph{event-driven}: a milestone such as an interim analysis or the final
+database lock (DBL) is triggered not by calendar time but by the accumulation
+of a target number of events of interest (e.g., progression or death). At any
+interim transfer date the project statistician must answer two dual prediction
+questions, conditioning on the data observed so far:
+
+\begin{enumerate}[label=(\textbf{Q\arabic*}),leftmargin=*]
+  \item \textbf{Event prediction.} For a fixed future horizon
+  $t^{1}$, how many additional events will have accrued by $t^{1}$?
+  \item \textbf{Time (landmark) prediction.} For a fixed target number of
+  additional events $n_{e}$, how long must the trial run before that target
+  is reached, i.e.\ the waiting time $W(n_{e})$?
+\end{enumerate}
+
+Both quantities are random because the future event process is unobserved at
+the interim. The statistical task is therefore to produce their full
+\emph{predictive distributions} (point estimate plus a calibrated prediction
+interval), not merely a point forecast, so that downstream operational
+timelines can be planned with their uncertainty made explicit.
+
+\section{Data and observation scheme}
+
+Let $i = 1,\dots,n$ index enrolled patients. For each patient there is a latent
+event time $T_i$ and a latent dropout (loss-to-follow-up / permanent censoring)
+time $C_i$. We assume $T_i \perp C_i$. In addition each patient has a fixed
+\emph{administrative censoring} time $a_i$, the time already accrued in the
+trial at the interim transfer date. The observed time is
+\[
+X_i \;=\; \min\{T_i,\,C_i,\,a_i\}.
+\]
+Define the cause indicators
+\[
+\Delta^{e}_i = \ind{T_i < \min\{C_i,a_i\}} \;(\equiv c_{i1}),
+\qquad
+\Delta^{c}_i = \ind{C_i < \min\{T_i,a_i\}} \;(\equiv c_{i2}).
+\]
+This partitions patients into three observation types at the interim:
+
+\begin{center}
+\begin{tabular}{lccl}
+\toprule
+Type & $\Delta^e_i$ & $\Delta^c_i$ & Meaning \\
+\midrule
+Event observed        & $1$ & $0$ & $X_i = T_i$ (failure recorded) \\
+Permanently censored  & $0$ & $1$ & $X_i = C_i$ (dropout / LTFU) \\
+Administratively censored & $0$ & $0$ & $X_i = a_i$ (still at risk) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The set of administratively censored patients,
+$A = \{\, i : \Delta^e_i = \Delta^c_i = 0 \,\}$, is exactly the
+\emph{at-risk} cohort whose future outcomes drive the projection; let $n_o$ be
+the number of events \emph{already} observed at the interim. Data on patients
+who have had an event or dropped out are fixed and will not change once the
+trial resumes.
+
+\section{Cause-specific hazards and the likelihood}
+
+Under the independence of $T_i$ and $C_i$, the cause-specific hazard for the
+event coincides with its marginal hazard,
+\[
+\lambda^{e}(t)
+= \lim_{\Delta t \to 0}
+\frac{\Prob\!\big(T_i \in [t,t+\Delta t),\,\Delta^e_i = 1 \given \min\{T_i,C_i,a_i\}\ge t\big)}{\Delta t}
+= \lim_{\Delta t \to 0}
+\frac{\Prob\!\big(T_i \in [t,t+\Delta t) \given T_i \ge t\big)}{\Delta t},
+\]
+and symmetrically for the dropout hazard $\lambda^{c}(t)$. With the standard
+relations $S(t) = \exp\{-\int_0^t \lambda(x)\dd x\}$ and $f(t)=\lambda(t)S(t)$,
+the contribution of each observation type yields the competing-risks
+likelihood (the slides write $f,g$ for the event/dropout densities,
+$S_T,S_C$ for the survival functions, and $\bm\lambda_T,\bm\lambda_C$ for the
+parameter vectors):
+\begin{align}
+L(\bm\lambda^{e},\bm\lambda^{c} \given X)
+&= \prod_{i=1}^{n}
+\Big\{ f^{e}(x_i)\,S^{c}(x_i) \Big\}^{\Delta^e_i}
+\Big\{ f^{c}(x_i)\,S^{e}(x_i) \Big\}^{\Delta^c_i}
+\Big\{ S^{e}(x_i)\,S^{c}(x_i) \Big\}^{(1-\Delta^e_i)(1-\Delta^c_i)}
+\notag\\[4pt]
+&= \prod_{i=1}^{n}
+\underbrace{\lambda^{e}(x_i)^{\Delta^e_i} S^{e}(x_i)}_{\text{event process}}
+\;\times\;
+\underbrace{\lambda^{c}(x_i)^{\Delta^c_i} S^{c}(x_i)}_{\text{dropout process}} .
+\label{eq:lik}
+\end{align}
+Because the event and dropout factors separate and share no parameters, the
+two hazard processes can be fit independently.
+
+\section{The piecewise-exponential model}
+
+Each hazard is modeled as piecewise constant on $N$ intervals delimited by
+change points $T_1 < T_2 < \dots < T_{N+1}$:
+\[
+h(t) \;=\; \sum_{k=1}^{N} \lambda_k \, \ind{T_k \le t < T_{k+1}}.
+\]
+In BEATLES the number of pieces $N$ is user-specified, and the change points
+$T_k$ default to equally spaced empirical quantiles of the observed event times
+(e.g.\ $N=5$ places knots at the $20,40,60,80\%$ quantiles). A separate
+piecewise-exponential model is used for the event and dropout hazards, giving
+parameter vectors $\bm\lambda^{e}=(\lambda^e_1,\dots,\lambda^e_N)$ and
+$\bm\lambda^{c}$. (Weibull and log-normal alternatives are also available to
+relax the constant-rate-in-final-piece restriction.)
+
+\section{Bayesian estimation via the Poisson equivalence}
+
+Maximizing or sampling \eqref{eq:lik} under the piecewise-exponential hazard is
+equivalent to a Poisson regression. Let $j$ index the piece, let
+$c_{ij} = c_i \, \ind{T_j \le t_i < T_{j+1}}$ be the event indicator for
+patient $i$ falling in piece $j$, and let $t_{ij}$ be the time patient $i$ is
+exposed within piece $j$. Then
+\[
+c_{ij} \;\sim\; \mathrm{Poisson}\!\big(t_{ij}\,\lambda_j\big),
+\]
+with conjugate gamma priors on the piece rates,
+\[
+\lambda_k \;\sim\; \mathrm{Gamma}(0.01,\,0.01), \qquad k = 1,\dots,N .
+\]
+The posterior is
+\[
+p(\bm\lambda^{e},\bm\lambda^{c} \given X)
+\;\propto\;
+L(\bm\lambda^{e},\bm\lambda^{c}\given X)\,
+\pi(\bm\lambda^{e})\,\pi(\bm\lambda^{c}),
+\]
+and, by the factorization above, posterior draws of $\bm\lambda^{e}$ and
+$\bm\lambda^{c}$ are obtained separately by MCMC (the implementation uses JAGS
+/ \texttt{rjags}; a core re-implementation in C\texttt{++} gives a $>\!50\times$
+speed-up). The result is a set of posterior samples
+$\{\bm\lambda^{(j)}\}_{j=1}^{M}$ that carry the parameter uncertainty into all
+predictions.
+
+\section{Prediction: posterior predictive distribution}
+
+Future outcomes are generated only for patients who are unobserved at the
+interim: the at-risk set $A$ ($\Delta^e=\Delta^c=0$) and, optionally, a
+\emph{future enrollment} cohort specified by an enrollment rate and duration.
+For an unobserved time $\tilde{y}$ the predictive law marginalizes over the
+posterior,
+\[
+p(\tilde{y},\bm\lambda \given y) \;=\; p(\tilde{y}\given \bm\lambda, y)\,
+p(\bm\lambda \given y),
+\]
+so each posterior draw $\bm\lambda^{(j)}$ produces one posterior predictive
+realization of the future event stream.
+
+\subsection*{Event prediction (Q1)}
+
+For an at-risk patient $i$ who has already survived to $t^{0}_i$, the
+probability of experiencing the event within the window $(t^{0}_i, t^{1}_i]$
+\emph{before} dropping out is
+\begin{align}
+p_i\!\left(t^{0}_i, t^{1}_i\right)
+&= \Prob\!\left(T_i \le t^1_i,\; T_i < C_i \;\middle|\; T_i > t^0_i,\, C_i > t^0_i\right)
+\notag\\[3pt]
+&= \frac{\displaystyle\int_{t^{0}_i}^{t^{1}_i}
+\lambda^{e}(t)\,S^{e}(t)\,S^{c}(t)\dd t}
+{\,S^{e}(t^{0}_i)\,S^{c}(t^{0}_i)\,}.
+\label{eq:eventprob}
+\end{align}
+Summing over the at-risk set and adding the events already banked gives the
+expected total and a sampled total at horizon $t^1$:
+\[
+\E\{N(I)\} = n_o + \sum_{i \in A} p_i\!\left(t^0_i, t^1_i\right),
+\qquad
+\widetilde{N}(I) = n_o + \sum_{i \in A}\widetilde{N}_i\!\left(t^0_i, t^1_i\right),
+\]
+where each $\widetilde{N}_i \sim \mathrm{Bernoulli}\big(p_i(t^0_i,t^1_i)\big)$.
+Repeating across posterior draws yields the predictive distribution of the
+event count. (This per-patient Bernoulli simulation is the computationally
+expensive branch: $\approx 10$ min per $1000$ draws.)
+
+\subsection*{Time / landmark prediction (Q2)}
+
+The waiting time to the $n_e$-th additional event is obtained by direct
+forward simulation of the future trajectory for each posterior draw:
+
+\begin{enumerate}[leftmargin=*]
+  \item Select the $j$-th posterior sample $\big(\bm\lambda^{e,(j)},
+  \bm\lambda^{c,(j)}\big)$.
+  \item For every at-risk patient $i \in A$, draw a future event time and
+  dropout time from the \emph{conditional} (truncated) piecewise-exponential,
+  i.e.\ $\widetilde{T}_i \sim f^{e}(\cdot \given \bm\lambda^{e,(j)})$
+  restricted to $\widetilde{T}_i > t^0_i$, and likewise
+  $\widetilde{C}_i > t^0_i$. Set
+  $\widetilde{X}_i = \min\{\widetilde{T}_i,\widetilde{C}_i\}$ and
+  $\widetilde{\Delta}^e_i = \ind{\widetilde{T}_i < \widetilde{C}_i}$.
+  \item Order the simulated event times
+  $\widetilde{X}_{(1)} \le \dots \le \widetilde{X}_{(k)}$ among patients with
+  $\widetilde{\Delta}^e_i = 1$.
+  \item If $k < n_e$ set $W^{(j)}(n_e) = \infty$; otherwise
+  $W^{(j)}(n_e) = \widetilde{X}_{(n_e)}$ (reported as additional time
+  $=$ event time $-$ time already in trial).
+  \item Repeat over all posterior draws to obtain the predictive distribution
+  of $W(n_e)$.
+\end{enumerate}
+This branch is fast ($\approx 1$ s per $1000$ draws). Predictions are summarized
+by the posterior predictive median and a $(1-\alpha)$ credible/prediction
+interval (e.g.\ the $\alpha/2,\,25,\,50,\,75,\,(1-\alpha/2)$ percentiles).
+
+\section{Practical considerations}
+
+\paragraph{Choice of pieces.} Simulation evidence indicates that the number and
+placement of pieces has only a minor effect on the projections; when in doubt
+it is safer to use more pieces than fewer, and to fit several models to gauge
+sensitivity rather than to underfit or overfit the hazard.
+
+\paragraph{Overestimation of events.} A recurring operational failure mode is
+that the model predicts \emph{more} events at the data-transfer date than were
+actually observed (e.g.\ predicted $146$ vs.\ actual $107$), producing overly
+aggressive timelines. Documented mitigations include: (i) resetting the last
+observed date of at-risk subjects to the transfer date (assumes no events occur
+between last contact and transfer, pushing the projection latest); (ii) adding
+the overestimated count to the target number of events; and (iii) anchoring
+projected event times to the next scheduled scan/visit date. Across
+retrospective oncology studies the standard analysis underestimated the DBL cut
+date by $7$--$14$ weeks, whereas the overestimation-corrected analyses landed
+within about $3$ weeks.
+
+\paragraph{Communication.} Because event rates can accelerate or slow, results
+are best reported as a \emph{range} of likely dates with the sources of
+variability stated explicitly: the within-projection predictive uncertainty,
+and the between-method variability across parametric models and sensitivity
+analyses.
+
+\end{document}

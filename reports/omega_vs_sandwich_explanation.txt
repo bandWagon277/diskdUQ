@@ -1,0 +1,174 @@
+Omega and Sandwich/Godambe Correction in Generalized Bayesian DiSKD
+
+Short answer:
+
+Omega has a literature basis in generalized Bayes / Gibbs posterior work, but omega and sandwich/Godambe correction are not automatically mathematically equivalent. Omega is a scalar spread calibration. Sandwich/Godambe is a matrix or functional-direction covariance correction. They coincide only under special proportionality conditions.
+
+
+1. What is omega?
+
+In generalized Bayes, a posterior can be defined by a loss rather than a true likelihood:
+
+Pi_omega(dtheta | D)
+  proportional to
+pi_0(theta) exp{-omega L_n(theta)}.
+
+Here omega is usually called a learning rate, loss scale, or inverse temperature. It controls how concentrated the generalized posterior is around the loss minimizer.
+
+Main references:
+
+1. Bissiri, Holmes, and Walker (2016), "A general framework for updating belief distributions"
+   https://pmc.ncbi.nlm.nih.gov/articles/PMC5082587/
+
+2. Syring and Martin (2019), "Calibrating general posterior credible regions"
+   https://academic.oup.com/biomet/article/106/2/479/5237467
+
+3. Shaby (2014), "The Open-Faced Sandwich Adjustment for MCMC Using Estimating Functions"
+   https://www.tandfonline.com/doi/abs/10.1080/10618600.2013.842174
+
+
+2. Why does this matter for DiSKD?
+
+Our Bayesian DiSKD posterior is not an ordinary likelihood posterior:
+
+Pi_eta(dtheta | D, P_tilde)
+  proportional to
+L_student(theta; D) pi_0(theta) exp{-eta Q_KL(theta; P_tilde)}.
+
+The teacher KL term is a prediction-level surrogate, not a true independent external-data likelihood. Therefore, the curvature of the generalized posterior does not automatically equal the repeated-sampling variability of the estimator.
+
+This is the same conceptual issue as in the external-KL posterior covariance correction paper: the KL term contributes curvature, but not necessarily the same sampling noise as raw external data.
+
+
+3. Local asymptotic comparison
+
+Let
+
+L_n(theta) = sum_i m_i(theta),
+
+and define
+
+H = E{ second derivative of m_i(theta_0) },
+
+J = Var{ gradient of m_i(theta_0) }.
+
+Then the raw generalized posterior covariance is locally
+
+Sigma_post = (1/n) H^{-1}.
+
+If we add omega:
+
+Pi_omega(dtheta | D)
+  proportional to
+pi_0(theta) exp{-omega L_n(theta)},
+
+then the local posterior covariance becomes
+
+Sigma_omega = (1 / (n omega)) H^{-1}.
+
+But the repeated-sampling covariance of the estimator is the Godambe/sandwich covariance:
+
+Sigma_sand = (1/n) H^{-1} J H^{-1}.
+
+So omega is equivalent to sandwich only if
+
+(1 / omega) H^{-1}
+  =
+H^{-1} J H^{-1}.
+
+Multiplying both sides by H gives the condition
+
+J = (1 / omega) H.
+
+That means a scalar omega can reproduce the full sandwich covariance only when J is proportional to H. This is generally not true in neural networks or even in moderate-dimensional last-layer models.
+
+
+4. Relationship to the last-layer correction we discussed
+
+The last-layer correction we discussed is closer to the true sandwich/Godambe correction:
+
+Sigma_Godambe = H_eta^{-1} J_eta H_eta^{-1}.
+
+In the external-KL correction paper's notation:
+
+H_eta = V^{-1} + A,
+
+where V^{-1} is the internal likelihood information and A is the KL curvature.
+
+The raw posterior covariance is
+
+Sigma_2 = (V^{-1} + A)^{-1}.
+
+The corrected repeated-sampling covariance is
+
+Sigma_1 = Sigma_2 V^{-1} Sigma_2.
+
+This is a sandwich form:
+
+H^{-1} J H^{-1},
+
+with
+
+H = V^{-1} + A,
+J = V^{-1}.
+
+Therefore, yes: the last-layer correction we previously explored is the more direct mathematical analogue of that posterior covariance correction. It is not just an omega tuning idea.
+
+
+5. When can omega still be useful?
+
+Omega can still be useful as a scalar calibration or sensitivity parameter, especially if we care about one scalar functional, such as a CIF at one horizon.
+
+Let
+
+phi(theta)
+
+be a scalar functional and
+
+g = gradient phi(theta).
+
+The raw posterior functional variance is
+
+v_post = g^T H^{-1} g.
+
+The sandwich functional variance is
+
+v_sand = g^T H^{-1} J H^{-1} g.
+
+For this one functional direction, we can define
+
+omega_phi = v_post / v_sand.
+
+Then
+
+(1 / omega_phi) v_post = v_sand.
+
+So omega can match sandwich in a single functional direction, or approximately across multiple functionals if the needed ratios are similar. But it does not generally recover the full covariance matrix.
+
+
+6. Recommended positioning for the proposal/manuscript
+
+Since the advisor previously suggested not adding omega, I would not make omega a main method parameter.
+
+A better framing is:
+
+1. Main method:
+   Bayesian / generalized Bayesian DiSKD with selected eta.
+
+2. Main covariance correction:
+   Last-layer Godambe / sandwich covariance correction.
+
+3. Omega:
+   Mention only as the generalized posterior loss-scale interpretation or as an appendix sensitivity, not as the primary algorithm.
+
+4. Non-Bayesian UQ:
+   Use bootstrap, ensemble, dropout, conformal, etc. as empirical baselines or safety comparators, not as the core method.
+
+
+7. Bottom line
+
+Omega is justified by generalized Bayes literature, but it is only a scalar spread calibration. The correction most directly corresponding to the external-KL posterior covariance paper is the last-layer Godambe/sandwich correction:
+
+Sigma_corrected = H_eta^{-1} J_eta H_eta^{-1}.
+
+Omega is mathematically equivalent to sandwich only if J_eta is proportional to H_eta, or if we restrict attention to one functional direction and choose a functional-specific omega. Otherwise, sandwich/Godambe is the more rigorous correction.

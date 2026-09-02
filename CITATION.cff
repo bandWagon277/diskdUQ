@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+type: software
+title: "Discrete Survival Knowledge Distillation for Competing Risks Analysis"
+message: "If you use this software, please cite the accompanying paper."
+abstract: "Software companion for Discrete Survival Knowledge Distillation, a discrete-time framework for distilling teacher predictions into survival and competing-risks student models."
+authors:
+  - family-names: Deng
+    given-names: Feiyang
+  - family-names: Luo
+    given-names: Lingfeng
+  - family-names: Wang
+    given-names: Di
+  - family-names: Li
+    given-names: Qinmengge
+  - family-names: Kong
+    given-names: Lingxuan
+  - family-names: He
+    given-names: Kevin
+conference:
+  name: "International Conference on Machine Learning"
+date-released: "2026-05-14"
+keywords:
+  - survival analysis
+  - competing risks
+  - knowledge distillation
+  - discrete-time models
