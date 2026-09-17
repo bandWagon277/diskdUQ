@@ -1,0 +1,106 @@
+% Source-only placeholders; the implementation handoff is PENDING_VALIDATION.md.
+% Not empirical results. This file contributes no printed content.
+% \section{Curvature and Sampling Variability Under Oracle and Shifted Guidance}
+% \label{app:covariance-comparison}
+% \emph{Results pending.} This comparison uses the logistic model in Appendix~\ref{subsec:single_linear_control}, with $n=500$, $K=10$, $\sigma=10$, administrative censoring, and 100 paired target cohorts. The oracle condition examines the spread comparison in Simulation~I, while the shifted condition distinguishes center displacement from spread error under the imperfect guidance studied in Simulation~II. The teachers are the true hazard and a fixed perturbation adding $0.5$ to its logit. Oracle fits use $\eta\in\{0,1,3\}$; shifted-teacher fits use $\eta\in\{1,3\}$ and share the target-only reference. MALA samples all thirteen parameters under the objective in Section~\ref{sec:method}.
+%
+% The comparison separates posterior SD estimated by MALA, inverse-Hessian SD, sandwich SD based on centered patient scores, and empirical SD across target cohorts. MAP and posterior-mean estimators have separate empirical SD estimates. The empirical variances of posterior means are also compared with their MCMC estimation variances. Bias is computed across cohorts at each fixed reference subject and horizon before taking its RMS across functionals. Table~\ref{tab:mechanism-spreads-main} summarizes horizons $2,5,10$; the full comparison retains all horizons.
+%
+% Coverage is evaluated against both the true survival law and the functional at the population minimizer of the penalized distillation objective, with $\lambda=(n\sigma^2)^{-1}$. Independent Gaussian quadrature over covariates and exact conditional integration over event times define this population reference. For score covariance, the integration retains each event outcome's random risk set. Raw intervals are MALA equal-tailed intervals. Adjusted intervals are MAP-centered functional Wald intervals with sandwich variance, intersected with $[0,1]$; MAP-centered curvature intervals provide a comparison with the same center and interval construction. Coverage of the penalized target distinguishes displacement from errors in estimating its sampling covariance.
+%
+% The likelihood, teacher, and symmetric cross-covariance contributions are projected onto the same functional gradients. Full-sandwich predictions are compared with empirical MAP variance and with predictions omitting the teacher or cross term. Under oracle guidance, the ratio of mean MALA functional variance to empirical estimator variance is reported separately for MAP and posterior means, alongside the finite-prior population approximation and the limiting reference $1+\eta$. Cohort-level resampling preserves pairing across borrowing weights when quantifying uncertainty in these comparisons.
+%
+% \begin{table}[htbp]
+% \centering\scriptsize
+% \caption{Estimator centers and raw posterior coverage in the logistic control. Results pending. EmpSD is evaluated separately for MAP and posterior-mean survival predictions; RMS bias refers to posterior means relative to truth. Raw coverage uses the same MALA intervals for the penalized population target $\phi_*$ and truth $\phi_0$. Table~\ref{tab:mechanism-spreads-main} gives the complementary spread and adjusted-coverage comparison.}
+% \label{tab:covariance-comparison}
+% \begin{tabular}{@{}lccccc@{}}
+% \toprule
+% Teacher / $\eta$ & RMS bias & \shortstack{EmpSD\\MAP} & \shortstack{EmpSD\\post. mean} & \shortstack{Raw cov.\\$\phi_*$} & \shortstack{Raw cov.\\$\phi_0$}\\
+% \midrule
+% Oracle / $0$ & -- & -- & -- & -- & --\\
+% Oracle / $1$ & -- & -- & -- & -- & --\\
+% Oracle / $3$ & -- & -- & -- & -- & --\\
+% Logit shift $0.5$ / $1$ & -- & -- & -- & -- & --\\
+% Logit shift $0.5$ / $3$ & -- & -- & -- & -- & --\\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+%
+% \section{Last-Layer Uncertainty With Fixed and Refitted Representations}
+% \label{app:representation-uncertainty}
+% \emph{Results pending.} In the nonlinear oracle setting with $n=500$ and $\eta\in\{0,10\}$, this comparison evaluates two training procedures over 20 paired target cohorts, using MediumMLP and $\sigma=0.25$. One learns a representation at $\eta=0$ from a single independent development cohort of size 500, holds it fixed across both borrowing weights and all target cohorts, and refits only the head. The other learns the representation anew from each target cohort and borrowing weight before conditional-head posterior sampling. Both optimize and sample the head conditional on their respective representations. The first procedure supplies a conditional-inference reference; its additional development data and representation quality preclude interpreting the comparison as a decomposition of representation variance.
+%
+% For each reference subject and horizon, the evaluation records bias, prediction RMSE, PostSD, EmpSD, coverage, interval width, and functional convergence diagnostics. Both procedures retain the observation convention used in Simulation~I. Their comparison examines the relation between conditional spread and repeated-cohort variability without attributing any remaining discrepancy to a single source of error.
+%
+% \begin{table}[htbp]
+% \centering\scriptsize
+% \caption{Last-layer uncertainty for fixed and refitted representations. Results pending. Bias is computed from the mean prediction across cohorts at each reference subject and horizon.}
+% \label{tab:representation-uncertainty}
+% \begin{tabular}{@{}lcccccc@{}}
+% \toprule
+% Representation & $\eta$ & RMS bias & RMSE & PostSD/EmpSD & Coverage & Width\\
+% \midrule
+% Fixed & $0$ & -- & -- & -- & -- & --\\
+% Fixed & $10$ & -- & -- & -- & -- & --\\
+% Refitted & $0$ & -- & -- & -- & -- & --\\
+% Refitted & $10$ & -- & -- & -- & -- & --\\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+%
+% \section{Local Sensitivity of Posterior-Mean Survival Predictions}
+% \label{app:teacher-sensitivity}
+% \emph{Results pending.} The estimated-compatible teacher defines the baseline in Equation~\eqref{eq:teacher-perturbation}. The comparison retains Simulation~II's nonlinear data law, time grid, observation convention, MediumMLP student, $n=500$, and $\sigma=0.25$. We consider a calibration direction $d_k(x)=1$ and a direction toward the risk-shifted teacher, given by its logit difference from the baseline teacher, normalized to unit RMS over 2,000 independent development subjects and all horizons. The perturbations are $\varepsilon\in\{-0.1,-0.05,0,0.05,0.1\}$ at $\eta=3$, over ten paired target cohorts. The baseline posterior is shared by both directions. The difference between fitted teacher logits may include calibration and estimation effects as well as covariate effects.
+%
+% For each baseline fit, the representation remains fixed during conditional-head optimization and posterior sampling under every perturbation. We compare the predicted posterior-mean change
+% \[
+% \widehat\Delta_{\rm pred}
+% =-\varepsilon n\eta\,\widehat{\operatorname{Cov}}_{\Pi_0}
+% \{\phi,\partial_\varepsilon Q_n(\theta;0)\}
+% \]
+% with $\widehat\Delta_{\rm actual}=\widehat\phi_B(\varepsilon)-\widehat\phi_B(0)$. The MAP response $-\varepsilon\eta g^\top\widehat A^{-1}\widehat B$ is evaluated separately. Symmetric finite differences at both perturbation sizes provide an additional derivative comparison. Comparisons by horizon and perturbation size report response magnitudes and absolute approximation error together with Monte Carlo uncertainty. The posterior-mean response residual accounts for the dependence between its baseline mean and covariance estimate; small effects are retained even when they cannot be distinguished from Monte Carlo error. The main display uses horizons $5,10,15$, with all horizons retained for supplementary evaluation.
+%
+% The derivatives use the teacher probabilities in the implemented loss, including any numerical clipping. Functional predictions and covariance calculations use double precision. Additional MAP-only finite differences in $\eta$ and prior precision, with the same representation held fixed, assess Equation~\eqref{eq:hyperparameter-sensitivity} without adding another posterior-sampling grid.
+%
+% \begin{figure}[htbp]
+% \centering
+% \ResultFigurePlaceholder[0.14\textheight]{Posterior-mean response to teacher perturbations\\[4pt]\normalfont Results pending}
+% \caption{Predicted and refitted changes in survival probability under a calibration offset and a perturbation toward the risk-shifted teacher, with the representation and distillation weight fixed.}
+% \label{fig:teacher-sensitivity}
+% \end{figure}
+%
+%
+% \begin{table}[t]
+% \centering\footnotesize
+% \caption{\textbf{Posterior and sampling spread in the logistic control. Results pending.} Entries will average pointwise SD over fixed reference subjects and horizons $2,5,10$. EmpSD is the across-cohort SD of the MAP functional; PostSD is obtained from MALA. CurvSD and SandSD use the fitted-mode gradient and inverse-Hessian and sandwich covariances, respectively. The last coverage columns give coverage of MAP-centered sandwich intervals for the penalized population functional $\phi_*$ and the true survival probability $\phi_0$; $R$ records completed cohorts. Raw coverage, posterior-mean EmpSD, and RMS bias are reported in Appendix~\ref{app:covariance-comparison}.}
+% \label{tab:mechanism-spreads-main}
+% \setlength{\tabcolsep}{4pt}
+% \begin{tabular}{@{}lccccccc@{}}
+% \toprule
+% Teacher / $\eta$ & \shortstack{EmpSD\\MAP} & PostSD & CurvSD & SandSD & \shortstack{Cov.\\$\phi_*$} & \shortstack{Cov.\\$\phi_0$} & $R$\\
+% \midrule
+% Oracle / $0$ & -- & -- & -- & -- & -- & -- & --\\
+% Oracle / $1$ & -- & -- & -- & -- & -- & -- & --\\
+% Oracle / $3$ & -- & -- & -- & -- & -- & -- & --\\
+% Logit shift $0.5$ / $1$ & -- & -- & -- & -- & -- & -- & --\\
+% Logit shift $0.5$ / $3$ & -- & -- & -- & -- & -- & -- & --\\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+% \begin{table}[t]
+% \centering\footnotesize
+% \caption{\textbf{Simulation II: local functional response. Results pending.} RMS response errors compare predicted and refitted changes in survival probability, separately for the MAP and posterior mean. Each row combines $\varepsilon=\pm h$ over paired cohorts and fixed reference subjects at horizons $5,10,15$. RMS MCSE is $\{\operatorname{mean}(\mathrm{MCSE}_{\rm residual}^2)\}^{1/2}$, computed from pointwise posterior-mean response residuals with dependence between the baseline mean and covariance estimate retained. Uncertainty in the aggregate RMS error is assessed separately across cohorts. Horizon-specific comparisons and response magnitudes appear in Appendix~\ref{app:teacher-sensitivity}.}
+% \label{tab:local-response-main}
+% \setlength{\tabcolsep}{5pt}
+% \begin{tabular}{@{}lcccc@{}}
+% \toprule
+% Direction & $h$ & \shortstack{MAP response\\RMS error} & \shortstack{Posterior-mean\\response RMS error} & RMS MCSE\\
+% \midrule
+% Calibration & $0.05$ & -- & -- & --\\
+% Calibration & $0.10$ & -- & -- & --\\
+% Toward risk-shifted teacher & $0.05$ & -- & -- & --\\
+% Toward risk-shifted teacher & $0.10$ & -- & -- & --\\
+% \bottomrule
+% \end{tabular}
+% \end{table}
